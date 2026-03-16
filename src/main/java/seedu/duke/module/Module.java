@@ -1,6 +1,6 @@
 package seedu.duke.module;
 
-import seedu.duke.exception.DukeException;
+import seedu.duke.exception.ModuleSyncException;
 import seedu.duke.task.Task;
 import seedu.duke.task.TaskList;
 
@@ -20,7 +20,7 @@ public class Module {
         return taskList;
     }
 
-    public Task addTodo(String description) throws DukeException {
+    public Task addTodo(String description) throws ModuleSyncException {
         return taskList.addTodo(code, description);
     }
 }

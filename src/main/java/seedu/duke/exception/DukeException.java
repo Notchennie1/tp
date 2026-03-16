@@ -1,6 +1,7 @@
 package seedu.duke.exception;
 
-public class DukeException extends Exception {
+@Deprecated
+public class DukeException extends ModuleSyncException {
     public DukeException(String message) {
         super(message);
     }

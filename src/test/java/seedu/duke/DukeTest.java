@@ -1,4 +1,4 @@
 package seedu.duke;
 
-class DukeTest {
+class ModuleSyncTest {
 }

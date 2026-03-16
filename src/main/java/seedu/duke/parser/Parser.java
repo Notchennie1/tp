@@ -3,13 +3,13 @@ package seedu.duke.parser;
 import seedu.duke.command.AddTodoCommand;
 import seedu.duke.command.Command;
 import seedu.duke.command.ExitCommand;
-import seedu.duke.exception.DukeException;
+import seedu.duke.exception.ModuleSyncException;
 
 public class Parser {
-    public Command parse(String input) throws DukeException {
+    public Command parse(String input) throws ModuleSyncException {
         String trimmed = input.trim();
         if (trimmed.isEmpty()) {
-            throw new DukeException("Command cannot be empty.");
+            throw new ModuleSyncException("Command cannot be empty.");
         }
         if (trimmed.equalsIgnoreCase("bye")) {
             return new ExitCommand();
@@ -17,13 +17,13 @@ public class Parser {
         if (trimmed.toLowerCase().startsWith("add")) {
             return parseAdd(trimmed);
         }
-        throw new DukeException("Unknown command. Try: add /mod MOD /task TASK");
+        throw new ModuleSyncException("Unknown command. Try: add /mod MOD /task TASK");
     }
 
-    private Command parseAdd(String input) throws DukeException {
+    private Command parseAdd(String input) throws ModuleSyncException {
         String remainder = input.length() > 3 ? input.substring(3).trim() : "";
         if (remainder.isEmpty()) {
-            throw new DukeException("Usage: add /mod MOD /task DESCRIPTION");
+            throw new ModuleSyncException("Usage: add /mod MOD /task DESCRIPTION");
         }
 
         String[] tokens = remainder.split("/");
@@ -43,7 +43,7 @@ public class Parser {
         }
 
         if (module == null || module.isEmpty() || task == null || task.isEmpty()) {
-            throw new DukeException("Usage: add /mod MOD /task DESCRIPTION");
+            throw new ModuleSyncException("Usage: add /mod MOD /task DESCRIPTION");
         }
         return new AddTodoCommand(module, task);
     }

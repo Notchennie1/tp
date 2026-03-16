@@ -1,6 +1,6 @@
 package seedu.duke.command;
 
-import seedu.duke.exception.DukeException;
+import seedu.duke.exception.ModuleSyncException;
 import seedu.duke.module.Module;
 import seedu.duke.module.ModuleBook;
 import seedu.duke.storage.Storage;
@@ -17,7 +17,7 @@ public class AddTodoCommand extends Command {
     }
 
     @Override
-    public void execute(ModuleBook moduleBook, Storage storage, Ui ui) throws DukeException {
+    public void execute(ModuleBook moduleBook, Storage storage, Ui ui) throws ModuleSyncException {
         Module module = moduleBook.getOrCreate(moduleCode);
         Task task = module.addTodo(description);
         storage.save(moduleBook);

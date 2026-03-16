@@ -5,12 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
-import seedu.duke.exception.DukeException;
+import seedu.duke.exception.ModuleSyncException;
 
 class TaskListTest {
 
     @Test
-    void addTodo_validDescription_addsTask() throws DukeException {
+    void addTodo_validDescription_addsTask() throws ModuleSyncException {
         TaskList list = new TaskList();
         Task task = list.addTodo("CS2113", " Week8 ");
 
@@ -22,6 +22,6 @@ class TaskListTest {
     @Test
     void addTodo_emptyDescription_throws() {
         TaskList list = new TaskList();
-        assertThrows(DukeException.class, () -> list.addTodo("CS2113", " "));
+        assertThrows(ModuleSyncException.class, () -> list.addTodo("CS2113", " "));
     }
 }

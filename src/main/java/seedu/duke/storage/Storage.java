@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import seedu.duke.exception.DukeException;
+import seedu.duke.exception.ModuleSyncException;
 import seedu.duke.module.Module;
 import seedu.duke.module.ModuleBook;
 import seedu.duke.task.Task;
@@ -20,7 +20,7 @@ public class Storage {
         this.filePath = filePath;
     }
 
-    public ModuleBook load() throws DukeException {
+    public ModuleBook load() throws ModuleSyncException {
         ModuleBook moduleBook = new ModuleBook();
         if (!Files.exists(filePath)) {
             ensureParentDirectory();
@@ -39,11 +39,11 @@ public class Storage {
             }
             return moduleBook;
         } catch (IOException e) {
-            throw new DukeException("Failed to read storage file: " + e.getMessage());
+            throw new ModuleSyncException("Failed to read storage file: " + e.getMessage());
         }
     }
 
-    public void save(ModuleBook moduleBook) throws DukeException {
+    public void save(ModuleBook moduleBook) throws ModuleSyncException {
         ensureParentDirectory();
         List<String> lines = new ArrayList<>();
         for (Module module : moduleBook.getModules()) {
@@ -54,14 +54,14 @@ public class Storage {
         try {
             Files.write(filePath, lines, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            throw new DukeException("Failed to save tasks: " + e.getMessage());
+            throw new ModuleSyncException("Failed to save tasks: " + e.getMessage());
         }
     }
 
-    private Task decodeTask(String line) throws DukeException {
+    private Task decodeTask(String line) throws ModuleSyncException {
         String[] parts = line.split("\\s*\\|\\s*");
         if (parts.length < 4) {
-            throw new DukeException("Corrupted task entry: " + line);
+            throw new ModuleSyncException("Corrupted task entry: " + line);
         }
         String moduleCode = parts[0];
         String type = parts[1];
@@ -72,28 +72,28 @@ public class Storage {
         case "T":
             return new Todo(moduleCode, description, isDone);
         default:
-            throw new DukeException("Unsupported task type: " + type);
+            throw new ModuleSyncException("Unsupported task type: " + type);
         }
     }
 
-    private boolean parseDone(String raw) throws DukeException {
+    private boolean parseDone(String raw) throws ModuleSyncException {
         if ("1".equals(raw)) {
             return true;
         }
         if ("0".equals(raw)) {
             return false;
         }
-        throw new DukeException("Invalid done flag: " + raw);
+        throw new ModuleSyncException("Invalid done flag: " + raw);
     }
 
-    private void ensureParentDirectory() throws DukeException {
+    private void ensureParentDirectory() throws ModuleSyncException {
         try {
             Path parent = filePath.getParent();
             if (parent != null && !Files.exists(parent)) {
                 Files.createDirectories(parent);
             }
         } catch (IOException e) {
-            throw new DukeException("Unable to create storage directory: " + e.getMessage());
+            throw new ModuleSyncException("Unable to create storage directory: " + e.getMessage());
         }
     }
 }

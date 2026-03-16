@@ -9,7 +9,7 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import seedu.duke.exception.DukeException;
+import seedu.duke.exception.ModuleSyncException;
 import seedu.duke.module.ModuleBook;
 import seedu.duke.storage.Storage;
 import seedu.duke.ui.Ui;
@@ -41,7 +41,7 @@ class AddTodoCommandTest {
     }
 
     @Test
-    void execute_addsTaskAndSaves(@TempDir Path tempDir) throws DukeException {
+    void execute_addsTaskAndSaves(@TempDir Path tempDir) throws ModuleSyncException {
         ModuleBook moduleBook = new ModuleBook();
         TestStorage storage = new TestStorage(tempDir.resolve("modules.txt"));
         TestUi ui = new TestUi();
