@@ -50,6 +50,8 @@ public abstract class Task {
     protected abstract char getTypeCode();
 
     public String formatForList(int index) {
-        return index + ".[" + getTypeCode() + "][" + getStatusIcon() + "] " + description;
+        return index + ".[" + getModuleCode() + "] "
+                + "[" + getTypeCode() + "][" + getStatusIcon() + "] "
+                + description;
     }
 }
