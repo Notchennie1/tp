@@ -18,6 +18,16 @@ public class TaskList {
         return todo;
     }
 
+    public Task addDeadline(String moduleCode, String description, 
+                            java.time.LocalDateTime by) throws ModuleSyncException {
+        if (description == null || description.trim().isEmpty()) {
+            throw new ModuleSyncException("Task description cannot be empty.");
+        }
+        Task deadline = new Deadline(moduleCode, description.trim(), by);
+        tasks.add(deadline);
+        return deadline;
+    }
+
     public Task add(Task task) {
         tasks.add(task);
         return task;
@@ -31,3 +41,4 @@ public class TaskList {
         return Collections.unmodifiableList(tasks);
     }
 }
+

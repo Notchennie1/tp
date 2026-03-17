@@ -71,6 +71,24 @@ public class Storage {
         switch (type) {
         case "T":
             return new Todo(moduleCode, description, isDone);
+        case "D":
+            if (parts.length < 5) {
+                throw new ModuleSyncException("Corrupted deadline entry: " + line);
+            }
+            try {
+                java.time.LocalDateTime byDate;
+                if (parts[4].length() <= 10) {
+                    java.time.LocalDate datePart = java.time.LocalDate.parse(parts[4]);
+                    byDate = datePart.atTime(23, 59);
+                } else {
+                    java.time.format.DateTimeFormatter formatter = 
+                            java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+                    byDate = java.time.LocalDateTime.parse(parts[4], formatter);
+                }
+                return new seedu.duke.task.Deadline(moduleCode, description, isDone, byDate);
+            } catch (java.time.format.DateTimeParseException e) {
+                throw new ModuleSyncException("Corrupted deadline date in entry: " + line);
+            }
         default:
             throw new ModuleSyncException("Unsupported task type: " + type);
         }
@@ -97,3 +115,8 @@ public class Storage {
         }
     }
 }
+
+
+
+
+

@@ -6,7 +6,12 @@ import seedu.duke.command.ExitCommand;
 import seedu.duke.command.ListCommand;
 import seedu.duke.command.MarkCommand;
 import seedu.duke.command.UnmarkCommand;
+import seedu.duke.command.AddDeadlineCommand;
 import seedu.duke.exception.ModuleSyncException;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public class Parser {
     public Command parse(String input) throws ModuleSyncException {
@@ -35,12 +40,13 @@ public class Parser {
     private Command parseAdd(String input) throws ModuleSyncException {
         String remainder = input.length() > 3 ? input.substring(3).trim() : "";
         if (remainder.isEmpty()) {
-            throw new ModuleSyncException("Usage: add /mod MOD /task DESCRIPTION");
+            throw new ModuleSyncException("Usage: add /mod MOD /task DESCRIPTION [/due YYYY-MM-DD]");
         }
 
         String[] tokens = remainder.split("/");
         String module = null;
         String task = null;
+        String due = null;
         for (String token : tokens) {
             String trimmed = token.trim();
             if (trimmed.isEmpty()) {
@@ -51,12 +57,35 @@ public class Parser {
                 module = trimmed.substring(4).trim();
             } else if (lower.startsWith("task ")) {
                 task = trimmed.substring(5).trim();
+            } else if (lower.startsWith("due ")) {
+                due = trimmed.substring(4).trim();
             }
         }
 
         if (module == null || module.isEmpty() || task == null || task.isEmpty()) {
-            throw new ModuleSyncException("Usage: add /mod MOD /task DESCRIPTION");
+            throw new ModuleSyncException("Usage: add /mod MOD /task DESCRIPTION [/due YYYY-MM-DD]");
         }
+
+        if (due != null && !due.isEmpty()) {
+            try {
+                LocalDateTime byDate;
+                if (due.length() > 10) {
+                    String normalizedDue = due;
+                    if (due.length() == 15 && due.charAt(10) == '-') {
+                        normalizedDue = due.substring(0, 10) + " " + due.substring(11);
+                    }
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HHmm");
+                    byDate = LocalDateTime.parse(normalizedDue, formatter);
+                } else {
+                    java.time.LocalDate date = java.time.LocalDate.parse(due);
+                    byDate = date.atTime(23, 59);
+                }
+                return new AddDeadlineCommand(module, task, byDate);
+            } catch (DateTimeParseException e) {
+                throw new ModuleSyncException("Invalid date format. Use yyyy-MM-dd or yyyy-MM-dd-HHmm");
+            }
+        }
+
         return new AddTodoCommand(module, task);
     }
 
@@ -83,3 +112,5 @@ public class Parser {
         }
     }
 }
+
+
