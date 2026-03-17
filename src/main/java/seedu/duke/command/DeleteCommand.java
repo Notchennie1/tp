@@ -17,7 +17,6 @@ public class DeleteCommand extends Command {
     @Override
     public void execute(ModuleBook moduleBook, Storage storage, Ui ui) throws ModuleSyncException {
         Task removedTask = moduleBook.deleteTaskByDisplayIndex(displayIndex);
-
         ui.showMessage("Noted. I've removed this task:");
         ui.showMessage("  " + removedTask.formatForList(displayIndex));
 
