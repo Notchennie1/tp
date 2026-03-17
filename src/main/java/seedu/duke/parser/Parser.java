@@ -6,7 +6,12 @@ import seedu.duke.command.ExitCommand;
 import seedu.duke.command.ListCommand;
 import seedu.duke.command.MarkCommand;
 import seedu.duke.command.UnmarkCommand;
+import seedu.duke.command.AddDeadlineCommand;
 import seedu.duke.exception.ModuleSyncException;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public class Parser {
     public Command parse(String input) throws ModuleSyncException {
@@ -19,9 +24,6 @@ public class Parser {
         }
         if (trimmed.toLowerCase().startsWith("add")) {
             return parseAdd(trimmed);
-        }
-        if (trimmed.toLowerCase().startsWith("deadline")) {
-            return parseAddDeadline(trimmed);
         }
         if (trimmed.equalsIgnoreCase("list")) {
             return new ListCommand();
@@ -38,12 +40,13 @@ public class Parser {
     private Command parseAdd(String input) throws ModuleSyncException {
         String remainder = input.length() > 3 ? input.substring(3).trim() : "";
         if (remainder.isEmpty()) {
-            throw new ModuleSyncException("Usage: add /mod MOD /task DESCRIPTION");
+            throw new ModuleSyncException("Usage: add /mod MOD /task DESCRIPTION [/due YYYY-MM-DD]");
         }
 
         String[] tokens = remainder.split("/");
         String module = null;
         String task = null;
+        String due = null;
         for (String token : tokens) {
             String trimmed = token.trim();
             if (trimmed.isEmpty()) {
@@ -54,50 +57,36 @@ public class Parser {
                 module = trimmed.substring(4).trim();
             } else if (lower.startsWith("task ")) {
                 task = trimmed.substring(5).trim();
+            } else if (lower.startsWith("due ")) {
+                due = trimmed.substring(4).trim();
             }
         }
 
         if (module == null || module.isEmpty() || task == null || task.isEmpty()) {
-            throw new ModuleSyncException("Usage: add /mod MOD /task DESCRIPTION");
+            throw new ModuleSyncException("Usage: add /mod MOD /task DESCRIPTION [/due YYYY-MM-DD]");
         }
+
+        if (due != null && !due.isEmpty()) {
+            try {
+                LocalDateTime byDate;
+                if (due.length() > 10) {
+                    String normalizedDue = due;
+                    if (due.length() == 15 && due.charAt(10) == '-') {
+                        normalizedDue = due.substring(0, 10) + " " + due.substring(11);
+                    }
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HHmm");
+                    byDate = LocalDateTime.parse(normalizedDue, formatter);
+                } else {
+                    java.time.LocalDate date = java.time.LocalDate.parse(due);
+                    byDate = date.atTime(23, 59);
+                }
+                return new AddDeadlineCommand(module, task, byDate);
+            } catch (DateTimeParseException e) {
+                throw new ModuleSyncException("Invalid date format. Use yyyy-MM-dd or yyyy-MM-dd-HHmm");
+            }
+        }
+
         return new AddTodoCommand(module, task);
-    }
-
-    private Command parseAddDeadline(String input) throws ModuleSyncException {
-        String remainder = input.length() > 8 ? input.substring(8).trim() : "";
-        if (remainder.isEmpty()) {
-            throw new ModuleSyncException("Usage: deadline /mod MOD /task DESCRIPTION /by YYYY-MM-DD");
-        }
-
-        String[] tokens = remainder.split("/");
-        String module = null;
-        String task = null;
-        String by = null;
-        for (String token : tokens) {
-            String trimmed = token.trim();
-            if (trimmed.isEmpty()) {
-                continue;
-            }
-            String lower = trimmed.toLowerCase();
-            if (lower.startsWith("mod ")) {
-                module = trimmed.substring(4).trim();
-            } else if (lower.startsWith("task ")) {
-                task = trimmed.substring(5).trim();
-            } else if (lower.startsWith("by ")) {
-                by = trimmed.substring(3).trim();
-            }
-        }
-
-        if (module == null || module.isEmpty() || task == null || task.isEmpty() || by == null || by.isEmpty()) {
-            throw new ModuleSyncException("Usage: deadline /mod MOD /task DESCRIPTION /by YYYY-MM-DD");
-        }
-        
-        try {
-            java.time.LocalDate byDate = java.time.LocalDate.parse(by);
-            return new seedu.duke.command.AddDeadlineCommand(module, task, byDate);
-        } catch (java.time.format.DateTimeParseException e) {
-            throw new ModuleSyncException("Invalid date format. Use yyyy-MM-dd");
-        }
     }
 
     private Command parseMark(String input) throws ModuleSyncException {
@@ -123,3 +112,5 @@ public class Parser {
         }
     }
 }
+
+

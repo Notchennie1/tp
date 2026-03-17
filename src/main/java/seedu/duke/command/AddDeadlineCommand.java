@@ -1,6 +1,6 @@
 package seedu.duke.command;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import seedu.duke.exception.ModuleSyncException;
 import seedu.duke.module.Module;
@@ -12,9 +12,9 @@ import seedu.duke.ui.Ui;
 public class AddDeadlineCommand extends Command {
     private final String moduleCode;
     private final String description;
-    private final LocalDate by;
+    private final LocalDateTime by;
 
-    public AddDeadlineCommand(String moduleCode, String description, LocalDate by) {
+    public AddDeadlineCommand(String moduleCode, String description, LocalDateTime by) {
         this.moduleCode = moduleCode;
         this.description = description;
         this.by = by;
@@ -28,3 +28,4 @@ public class AddDeadlineCommand extends Command {
         ui.showTaskAdded(module, task, moduleBook.totalTaskCount());
     }
 }
+

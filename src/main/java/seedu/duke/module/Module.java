@@ -24,7 +24,8 @@ public class Module {
         return taskList.addTodo(code, description);
     }
 
-    public Task addDeadline(String description, java.time.LocalDate by) throws ModuleSyncException {
+    public Task addDeadline(String description, java.time.LocalDateTime by) throws ModuleSyncException {
         return taskList.addDeadline(code, description, by);
     }
 }
+

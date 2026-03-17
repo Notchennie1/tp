@@ -1,27 +1,28 @@
 package seedu.duke.task;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
 public class Deadline extends Task {
-    private final LocalDate by;
+    private final LocalDateTime by;
 
-    public Deadline(String moduleCode, String description, LocalDate by) {
+    public Deadline(String moduleCode, String description, LocalDateTime by) {
         super(moduleCode, description, false);
         this.by = by;
     }
 
-    public Deadline(String moduleCode, String description, boolean isDone, LocalDate by) {
+    public Deadline(String moduleCode, String description, boolean isDone, LocalDateTime by) {
         super(moduleCode, description, isDone);
         this.by = by;
     }
 
-    public LocalDate getBy() {
+    public LocalDateTime getBy() {
         return by;
     }
 
     public long getDaysLeft() {
-        return ChronoUnit.DAYS.between(LocalDate.now(), by);
+        return ChronoUnit.DAYS.between(LocalDateTime.now(), by);
     }
 
     @Override
@@ -31,11 +32,14 @@ public class Deadline extends Task {
 
     @Override
     protected String encodeExtra() {
-        return by.toString();
+        return by.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
     }
 
     @Override
     public String formatForList(int index) {
-        return super.formatForList(index) + " (by: " + by + ", " + getDaysLeft() + " days left)";
+        String base = super.formatForList(index);
+        String formattedDate = by.format(DateTimeFormatter.ofPattern("MMM dd yyyy, HH:mm"));
+        return base + " (by: " + formattedDate + ", " + getDaysLeft() + " days left)";
     }
 }
+
