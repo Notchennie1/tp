@@ -65,14 +65,20 @@ public class Ui {
      * @param moduleBook the module book containing all modules and tasks
      */
     public void showDeadlineList(ModuleBook moduleBook) {
+        assert moduleBook != null : "ModuleBook must not be null when calling showDeadlineList";
+        
         // Collect all deadlines
         List<DeadlineEntry> deadlines = new ArrayList<>();
         int globalTaskNumber = 1;
         
         for (Module module : moduleBook.getModules()) {
+            assert module != null : "Module retrieved from ModuleBook must not be null";
             for (Task task : module.getTasks().asUnmodifiableList()) {
+                assert task != null : "Task retrieved from TaskList must not be null";
                 if (task instanceof Deadline) {
-                    deadlines.add(new DeadlineEntry((Deadline) task, globalTaskNumber, module.getCode()));
+                    Deadline deadline = (Deadline) task;
+                    assert deadline.getBy() != null : "Deadline date must not be null";
+                    deadlines.add(new DeadlineEntry(deadline, globalTaskNumber, module.getCode()));
                 }
                 globalTaskNumber++;
             }
@@ -85,6 +91,12 @@ public class Ui {
 
         // Sort by deadline (earliest first)
         deadlines.sort((a, b) -> a.deadline.getBy().compareTo(b.deadline.getBy()));
+        
+        // Verify sorting: each deadline should be <= the next deadline
+        for (int i = 0; i < deadlines.size() - 1; i++) {
+            assert deadlines.get(i).deadline.getBy().compareTo(deadlines.get(i + 1).deadline.getBy()) <= 0
+                    : "Deadlines must be sorted in ascending order by due date";
+        }
 
         System.out.println("Here are the upcoming deadlines:");
         for (DeadlineEntry entry : deadlines) {

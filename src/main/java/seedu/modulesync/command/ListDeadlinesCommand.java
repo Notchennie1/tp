@@ -10,6 +10,9 @@ import seedu.modulesync.ui.Ui;
 public class ListDeadlinesCommand extends Command {
     @Override
     public void execute(ModuleBook moduleBook, Storage storage, Ui ui) {
+        assert moduleBook != null : "ModuleBook must not be null when executing ListDeadlinesCommand";
+        assert storage != null : "Storage must not be null when executing ListDeadlinesCommand";
+        assert ui != null : "Ui must not be null when executing ListDeadlinesCommand";
         ui.showDeadlineList(moduleBook);
     }
 }

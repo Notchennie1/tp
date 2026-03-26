@@ -279,12 +279,17 @@ public class Parser {
      * @throws ModuleSyncException if an unknown filter is provided
      */
     private Command parseList(String input) throws ModuleSyncException {
+        assert input != null && !input.isEmpty() : "Input to parseList must not be null or empty";
         String remainder = extractRemainder(input, CMD_LIST.length());
         if (remainder.isEmpty()) {
-            return new ListCommand();
+            Command cmd = new ListCommand();
+            assert cmd != null : "ListCommand must be created successfully";
+            return cmd;
         }
         if (remainder.toLowerCase().contains(PREFIX_DEADLINES.toLowerCase())) {
-            return new ListDeadlinesCommand();
+            Command cmd = new ListDeadlinesCommand();
+            assert cmd != null : "ListDeadlinesCommand must be created successfully";
+            return cmd;
         }
         throw new ModuleSyncException("Unknown list filter. Try: list /deadlines");
     }
