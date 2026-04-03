@@ -143,4 +143,4 @@ Example:
 | Mark task as done | `mark TASK_NUMBER` |
 | Unmark task as not done | `unmark TASK_NUMBER` |
 | Delete task | `delete TASK_NUMBER` |
-| Exit application | `exit` |
+| Exit application | `bye` |
