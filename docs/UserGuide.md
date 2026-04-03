@@ -19,6 +19,7 @@ It helps you capture tasks quickly, view only what matters (e.g., unfinished tas
 Notes about command formats:
 
 * Words in `UPPER_CASE` are parameters to be supplied by you.
+* Words in square brackets `[OPTIONAL]` are optional parameters.
 * Module codes are case-insensitive (e.g., `cs2113` is treated as `CS2113`).
 * Task indices are **1-based** and refer to the numbering shown by `list`.
 
@@ -30,7 +31,8 @@ Format: `add /mod MODULE_CODE /task DESCRIPTION [/due YYYY-MM-DD[-HHmm]] [/w PER
 * `/due` is optional.
 	* `YYYY-MM-DD` is interpreted as `23:59` on that date.
 	* `YYYY-MM-DD-HHmm` (e.g., `2026-04-01-2359`) specifies an exact time.
-* `/w` is optional and must be an integer from `0` to `100`.
+* `/w` is optional and must be an integer from `0` to `100` (representing percentage weightage).
+* Both parameters can be added in any order.
 
 Examples:
 
@@ -67,26 +69,78 @@ Examples:
 * `list /notdone /mod CS2113`
 * `list /mod CS2113 /notdone`
 
+### Marking a task as done: `mark`
+Marks a task as completed.
+
+Format: `mark TASK_NUMBER`
+
+* Task number refers to the index shown in the `list` output (1-based).
+
+Examples:
+
+* `mark 1`
+* `mark 5`
+
+### Unmarking a task as not done: `unmark`
+Marks a task as incomplete (undoes a previous `mark`).
+
+Format: `unmark TASK_NUMBER`
+
+* Task number refers to the index shown in the `list` output (1-based).
+
+Examples:
+
+* `unmark 1`
+* `unmark 3`
+
 ### Deleting a task: `delete`
 Deletes a task using its **display index** from `list`.
 
 Format: `delete TASK_NUMBER`
 
+* Task number refers to the index shown in the `list` output (1-based).
+
 Example:
 
 * `delete 3`
+
+### Exiting the application: `exit`
+Closes the application and saves all data.
+
+Format: `exit`
+
+Example:
+
+* `exit`
 
 ## FAQ
 
 **Q**: How do I transfer my data to another computer? 
 
-**A**: {your answer here}
+**A**: Your task data is stored in a file called `modules.txt` in the `data/` folder. You can copy this file to the `data/` folder of ModuleSync on another computer to transfer all your tasks.
+
+**Q**: Can I edit the `modules.txt` file directly?
+
+**A**: Yes, you can manually edit the `modules.txt` file as it is a plain text file. However, be careful with the format to avoid corruption. Make sure to follow the same format as the existing entries.
+
+**Q**: What happens when I mark a task as done?
+
+**A**: Marking a task toggles its status. If it's not done, it will be marked as done (and will not appear in `list /notdone`). You can unmark it later using the `unmark` command.
+
+**Q**: Will my data be lost if the application crashes?
+
+**A**: As long as your last command was successfully executed, all data is saved to `modules.txt` immediately after each command. If a command fails, no data is saved for that command.
 
 ## Command Summary
 
-* Add task `add /mod MODULE_CODE /task DESCRIPTION [/due YYYY-MM-DD[-HHmm]] [/w PERCENT]`
-* List all tasks `list`
-* List tasks by module `list /mod MODULE_CODE`
-* List upcoming deadlines `list /deadlines`
-* List not-done tasks by module `list /notdone /mod MODULE_CODE`
-* Delete task `delete TASK_NUMBER`
+| Action | Format |
+|--------|--------|
+| Add task | `add /mod MODULE_CODE /task DESCRIPTION [/due YYYY-MM-DD[-HHmm]] [/w PERCENT]` |
+| List all tasks | `list` |
+| List tasks by module | `list /mod MODULE_CODE` |
+| List upcoming deadlines | `list /deadlines` |
+| List not-done tasks by module | `list /notdone /mod MODULE_CODE` |
+| Mark task as done | `mark TASK_NUMBER` |
+| Unmark task as not done | `unmark TASK_NUMBER` |
+| Delete task | `delete TASK_NUMBER` |
+| Exit application | `exit` |
