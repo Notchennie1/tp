@@ -7,11 +7,13 @@ import java.time.format.DateTimeParseException;
 
 import seedu.modulesync.command.AddDeadlineCommand;
 import seedu.modulesync.command.AddTodoCommand;
+import seedu.modulesync.command.CheckUrgentCommand;
 import seedu.modulesync.command.Command;
 import seedu.modulesync.command.DeleteCommand;
 import seedu.modulesync.command.ExitCommand;
 import seedu.modulesync.command.ListCommand;
 import seedu.modulesync.command.ListDeadlinesCommand;
+import seedu.modulesync.command.ListNotDoneCommand;
 import seedu.modulesync.command.MarkCommand;
 import seedu.modulesync.command.UnmarkCommand;
 import seedu.modulesync.exception.ModuleSyncException;
@@ -22,6 +24,8 @@ import seedu.modulesync.exception.ModuleSyncException;
 public class Parser {
 
     private static final String CMD_BYE = "bye";
+    private static final String CMD_CHECK_URGENT = "check /urgent";
+    private static final String CMD_ALT_CHECK_URGENT = "/urgent";
     private static final String CMD_ADD = "add";
     private static final String CMD_LIST = "list";
     private static final String CMD_MARK = "mark";
@@ -29,6 +33,8 @@ public class Parser {
     private static final String CMD_DELETE = "delete";
 
     private static final String PREFIX_DEADLINES = "/deadlines";
+    private static final String PREFIX_NOT_DONE = "/notdone";
+    private static final String PREFIX_LIST_MOD = "/mod";
     private static final String PREFIX_MOD = "mod ";
     private static final String PREFIX_TASK = "task ";
     private static final String PREFIX_DUE = "due ";
@@ -69,6 +75,9 @@ public class Parser {
         }
         if (trimmed.equalsIgnoreCase(CMD_BYE)) {
             return new ExitCommand();
+        }
+        if (trimmed.equalsIgnoreCase(CMD_CHECK_URGENT) || trimmed.equalsIgnoreCase(CMD_ALT_CHECK_URGENT)) {
+            return new CheckUrgentCommand();
         }
         if (trimmed.toLowerCase().startsWith(CMD_ADD)) {
             return parseAdd(trimmed);
@@ -268,6 +277,7 @@ public class Parser {
     private Command parseDelete(String input) throws ModuleSyncException {
         String remainder = extractRemainder(input, CMD_DELETE_LENGTH);
         int taskNumber = parseTaskNumber(remainder, CMD_DELETE);
+        assert taskNumber > 0 : "Parsed task number must be strictly positive";
         return new DeleteCommand(taskNumber);
     }
 
@@ -279,19 +289,71 @@ public class Parser {
      * @throws ModuleSyncException if an unknown filter is provided
      */
     private Command parseList(String input) throws ModuleSyncException {
-        assert input != null && !input.isEmpty() : "Input to parseList must not be null or empty";
         String remainder = extractRemainder(input, CMD_LIST.length());
+
         if (remainder.isEmpty()) {
-            Command cmd = new ListCommand();
-            assert cmd != null : "ListCommand must be created successfully";
-            return cmd;
+            return new ListCommand();
         }
-        if (remainder.toLowerCase().contains(PREFIX_DEADLINES.toLowerCase())) {
-            Command cmd = new ListDeadlinesCommand();
-            assert cmd != null : "ListDeadlinesCommand must be created successfully";
-            return cmd;
+
+        String[] tokens = remainder.split("\\s+");
+
+        if (tokens.length == 1 && tokens[0].equalsIgnoreCase(PREFIX_DEADLINES)) {
+            return new ListDeadlinesCommand();
         }
-        throw new ModuleSyncException("Unknown list filter. Try: list /deadlines");
+
+        if (tokens.length == 2 && tokens[0].equalsIgnoreCase(PREFIX_LIST_MOD)) {
+            if (tokens[1].startsWith("/")) {
+                throw new ModuleSyncException("Usage: list /mod MODULE_CODE");
+            }
+            return new ListCommand(tokens[1]);
+        }
+
+        if (tokens.length == 3) {
+            boolean hasNotDone = false;
+            int modFlagIndex = -1;
+
+            for (int i = 0; i < tokens.length; i++) {
+                if (tokens[i].equalsIgnoreCase(PREFIX_NOT_DONE)) {
+                    hasNotDone = true;
+                }
+                if (tokens[i].equalsIgnoreCase(PREFIX_LIST_MOD)) {
+                    modFlagIndex = i;
+                }
+            }
+
+            if (hasNotDone && modFlagIndex >= 0 && modFlagIndex + 1 < tokens.length
+                    && !tokens[modFlagIndex + 1].startsWith("/")) {
+                String moduleCode = tokens[modFlagIndex + 1];
+                assert moduleCode != null && !moduleCode.isBlank() : "Module code token must not be blank";
+                return new ListNotDoneCommand(moduleCode);
+            }
+        }
+
+        for (String token : tokens) {
+            if (token.equalsIgnoreCase(PREFIX_DEADLINES) && tokens.length > 1) {
+                throw new ModuleSyncException("Usage: list /deadlines");
+            }
+        }
+
+        if (containsToken(tokens, PREFIX_LIST_MOD)) {
+            throw new ModuleSyncException("Usage: list /mod MODULE_CODE");
+        }
+
+        if (containsToken(tokens, PREFIX_NOT_DONE)) {
+            throw new ModuleSyncException("Usage: list /notdone /mod MOD");
+        }
+
+        throw new ModuleSyncException(
+                "Unknown list filter. Try: list, list /mod MODULE_CODE, list /deadlines or list /notdone /mod MOD");
+    }
+
+    private boolean containsToken(String[] tokens, String target) {
+        for (String token : tokens) {
+            if (token.equalsIgnoreCase(target)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -307,7 +369,11 @@ public class Parser {
             throw new ModuleSyncException("Usage: " + commandWord + " TASK_NUMBER");
         }
         try {
-            return Integer.parseInt(rawTaskNumber);
+            int value = Integer.parseInt(rawTaskNumber);
+            if (value <= 0) {
+                throw new ModuleSyncException("Task number must be a positive integer.");
+            }
+            return value;
         } catch (NumberFormatException e) {
             throw new ModuleSyncException("Task number must be a positive integer.");
         }

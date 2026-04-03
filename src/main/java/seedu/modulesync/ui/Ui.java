@@ -58,6 +58,64 @@ public class Ui {
         }
     }
 
+    public void showTaskList(ModuleBook moduleBook, String moduleCode) {
+        Module module = moduleBook.getModule(moduleCode);
+
+        if (module == null) {
+            System.out.println("No such module: " + moduleCode.toUpperCase() + ".");
+            return;
+        }
+
+        if (module.getTasks().size() == 0) {
+            System.out.println("No tasks found for module " + module.getCode() + ".");
+            return;
+        }
+
+        System.out.println("Here are the tasks for " + module.getCode() + ":");
+
+        int globalTaskNumber = 1;
+        for (Module currentModule : moduleBook.getModules()) {
+            for (Task task : currentModule.getTasks().asUnmodifiableList()) {
+                if (currentModule.getCode().equals(module.getCode())) {
+                    System.out.println(task.formatForList(globalTaskNumber));
+                }
+                globalTaskNumber++;
+            }
+        }
+    }
+
+    public void showNotDoneTaskList(ModuleBook moduleBook, String moduleCode) {
+        assert moduleBook != null : "ModuleBook must not be null when listing not-done tasks";
+        assert moduleCode != null && !moduleCode.isBlank() : "Module code must not be null/blank when listing not-done";
+
+        if (moduleBook.countTotalTasks() == 0) {
+            System.out.println("No tasks found.");
+            return;
+        }
+
+        String targetModuleCode = moduleCode.toUpperCase();
+        int globalTaskNumber = 1;
+        boolean foundNotDoneTask = false;
+
+        for (Module module : moduleBook.getModules()) {
+            boolean isTargetModule = module.getCode().equals(targetModuleCode);
+            for (Task task : module.getTasks().asUnmodifiableList()) {
+                if (isTargetModule && !task.isDone()) {
+                    if (!foundNotDoneTask) {
+                        System.out.println("Here are the not done tasks for " + targetModuleCode + ":");
+                        foundNotDoneTask = true;
+                    }
+                    System.out.println(task.formatForList(globalTaskNumber));
+                }
+                globalTaskNumber++;
+            }
+        }
+
+        if (!foundNotDoneTask) {
+            System.out.println("No not done tasks found for " + targetModuleCode + ".");
+        }
+    }
+
     /**
      * Displays all upcoming deadlines in chronological order.
      * Helps the user plan their week by showing deadlines organized by proximity.
@@ -130,6 +188,8 @@ public class Ui {
     }
 
     public void showTaskDeleted(Task task, int totalTasks) {
+        assert task != null : "Deleted task must not be null";
+        assert totalTasks >= 0 : "Total task count must not be negative";
         System.out.println("Noted. I've removed this task:");
         System.out.println("  [" + task.getModuleCode() + "] " + task.formatForList(0));
         System.out.println("Now you have " + totalTasks + " task(s) in the list.");
