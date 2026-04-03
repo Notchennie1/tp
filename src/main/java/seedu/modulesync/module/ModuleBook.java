@@ -107,5 +107,40 @@ public class ModuleBook {
 
         throw new ModuleSyncException("Task number does not exist: " + displayIndex);
     }
+
+    /**
+     * Updates the deadline of a task by its 1-based display index across all modules.
+     * Replaces the task with a new Deadline task, preserving its module, description, completion status and weightage.
+     *
+     * @param displayIndex the 1-based index of the task to update
+     * @param by the new deadline date and time
+     * @return the updated {@link Task}
+     * @throws ModuleSyncException if the index is invalid or out of range
+     */
+    public Task updateTaskDeadlineByDisplayIndex(int displayIndex, java.time.LocalDateTime by) 
+            throws ModuleSyncException {
+        if (displayIndex <= 0) {
+            throw new ModuleSyncException("Task number must be a positive integer.");
+        }
+
+        int currentIndex = 1;
+        for (Module module : modules.values()) {
+            int moduleTaskCount = module.getTasks().size();
+            if (displayIndex >= currentIndex && displayIndex < currentIndex + moduleTaskCount) {
+                int indexInModule = displayIndex - currentIndex;
+                Task oldTask = module.getTasks().asUnmodifiableList().get(indexInModule);
+                seedu.modulesync.task.Deadline newDeadline = new seedu.modulesync.task.Deadline(
+                        oldTask.getModuleCode(), oldTask.getDescription(), oldTask.isDone(), by);
+                if (oldTask.hasWeightage()) {
+                    newDeadline.setWeightage(oldTask.getWeightage());
+                }
+                module.getTasks().setTask(indexInModule, newDeadline);
+                return newDeadline;
+            }
+            currentIndex += moduleTaskCount;
+        }
+
+        throw new ModuleSyncException("Task number does not exist: " + displayIndex);
+    }
 }
 

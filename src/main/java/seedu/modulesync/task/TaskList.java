@@ -90,4 +90,11 @@ public class TaskList {
         }
         return tasks.remove(index);
     }
+
+    public void setTask(int index, Task task) throws ModuleSyncException {
+        if (index < 0 || index >= tasks.size()) {
+            throw new ModuleSyncException("Task index out of bounds.");
+        }
+        tasks.set(index, task);
+    }
 }

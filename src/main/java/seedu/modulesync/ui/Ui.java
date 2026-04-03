@@ -213,4 +213,11 @@ public class Ui {
         System.out.println("  [" + task.getModuleCode() + "] " + task.formatForList(0));
         System.out.println("Now you have " + totalTasks + " task(s) in the list.");
     }
+
+    public void showTaskDeadlineUpdated(Task task, int taskNumber) {
+        assert task != null : "Updated task must not be null";
+        assert taskNumber > 0 : "Task number must be positive";
+        System.out.println("Got it. I've updated the deadline for this task:");
+        System.out.println("  " + task.formatForList(taskNumber));
+    }
 }
