@@ -267,6 +267,15 @@ public class Ui {
         System.out.println("  " + task.formatForList(taskNumber));
     }
 
+    public void showNoTasksToMark(String moduleCode) {
+        System.out.println("There are no tasks to mark in module " + moduleCode.toUpperCase() + ".");
+    }
+
+    public void showAllTasksMarked(String moduleCode, int taskCount) {
+        System.out.println("Nice! I've marked all " + taskCount + " task(s) in " 
+                + moduleCode.toUpperCase() + " as done.");
+    }
+
     public void showTaskUnmarked(Task task, int taskNumber) {
         System.out.println("OK, I've marked this task as not done yet:");
         System.out.println("  " + task.formatForList(taskNumber));

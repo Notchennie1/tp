@@ -306,6 +306,20 @@ public class Parser {
      */
     private Command parseMark(String input) throws ModuleSyncException {
         String remainder = extractRemainder(input, CMD_MARK_LENGTH);
+
+        if (remainder.toLowerCase().startsWith(PREFIX_LIST_MOD) || remainder.toLowerCase().contains("/all")) {
+            String[] tokens = remainder.split("\\s+");
+            if (tokens.length != 3 || !tokens[0].equalsIgnoreCase(PREFIX_LIST_MOD) 
+                    || !tokens[2].equalsIgnoreCase("/all")) {
+                throw new ModuleSyncException("Usage: mark /mod MODULE_CODE /all");
+            }
+            String moduleCode = tokens[1];
+            if (moduleCode.startsWith("/")) {
+                throw new ModuleSyncException("Usage: mark /mod MODULE_CODE /all");
+            }
+            return new MarkCommand(moduleCode);
+        }
+
         int taskNumber = parseTaskNumber(remainder, CMD_MARK);
         return new MarkCommand(taskNumber);
     }
