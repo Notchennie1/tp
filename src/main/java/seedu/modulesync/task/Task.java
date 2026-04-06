@@ -116,7 +116,8 @@ public abstract class Task {
         }
 
         if (completedAt != null) {
-            fields.add("completed:" + completedAt.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+            fields.add("completed:" +
+                    completedAt.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
         }
 
         return String.join(" | ", fields);
