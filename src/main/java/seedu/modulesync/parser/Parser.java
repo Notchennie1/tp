@@ -20,6 +20,7 @@ import seedu.modulesync.command.MarkCommand;
 import seedu.modulesync.command.SemesterStatsCommand;
 import seedu.modulesync.command.SetDeadlineCommand;
 import seedu.modulesync.command.SetWeightCommand;
+import seedu.modulesync.command.StatsCommand;
 import seedu.modulesync.command.UnmarkCommand;
 import seedu.modulesync.exception.ModuleSyncException;
 
@@ -38,6 +39,7 @@ public class Parser {
     private static final String CMD_DELETE = "delete";
     private static final String CMD_SETWEIGHT = "setweight";
     private static final String CMD_SETDEADLINE = "setdeadline";
+    private static final String CMD_STATS = "stats";
     private static final String CMD_MODULES = "modules";
     private static final String CMD_SEMESTER_STATS = "semesterstats";
 
@@ -56,6 +58,7 @@ public class Parser {
     private static final int CMD_DELETE_LENGTH = 6;
     private static final int CMD_SETWEIGHT_LENGTH = 9;
     private static final int CMD_SETDEADLINE_LENGTH = 11;
+    private static final int CMD_STATS_LENGTH = 5;
 
     private static final int PREFIX_MOD_LENGTH = 4;
     private static final int PREFIX_TASK_LENGTH = 5;
@@ -117,6 +120,9 @@ public class Parser {
         }
         if (trimmed.toLowerCase().startsWith(CMD_SETDEADLINE)) {
             return parseSetDeadline(trimmed);
+        }
+        if (trimmed.toLowerCase().startsWith(CMD_STATS)) {
+            return parseStats(trimmed);
         }
         throw new ModuleSyncException(UNKNOWN_COMMAND_MSG);
     }
@@ -471,6 +477,31 @@ public class Parser {
         } catch (NumberFormatException e) {
             throw new ModuleSyncException("Task number must be a positive integer.");
         }
+    }
+
+    /**
+     * Parses a "stats" command.
+     * Format: {@code stats /mod MODULE_CODE}
+     *
+     * @param input the full stats command string
+     * @return a {@link StatsCommand} for the specified module
+     * @throws ModuleSyncException if the module code is missing or malformed
+     */
+    private Command parseStats(String input) throws ModuleSyncException {
+        String remainder = extractRemainder(input, CMD_STATS_LENGTH);
+        if (remainder.isEmpty()) {
+            throw new ModuleSyncException("Usage: stats /mod MODULE_CODE");
+        }
+        String[] tokens = remainder.split("\\s+");
+        if (tokens.length != 2 || !tokens[0].equalsIgnoreCase(PREFIX_LIST_MOD)) {
+            throw new ModuleSyncException("Usage: stats /mod MODULE_CODE");
+        }
+        String moduleCode = tokens[1];
+        if (moduleCode.startsWith("/")) {
+            throw new ModuleSyncException("Usage: stats /mod MODULE_CODE");
+        }
+        assert moduleCode != null && !moduleCode.isBlank() : "Module code must not be blank for stats command";
+        return new StatsCommand(moduleCode);
     }
 }
 

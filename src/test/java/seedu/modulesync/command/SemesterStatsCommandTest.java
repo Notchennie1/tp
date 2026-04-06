@@ -39,7 +39,8 @@ class SemesterStatsCommandTest {
         ModuleBook moduleBook = new ModuleBook();
 
         Task t1 = moduleBook.getOrCreate("CS2113").addTodo("Week8", 10);
-        Task t2 = moduleBook.getOrCreate("CS2113").addDeadline("Project", LocalDateTime.of(2026, 4, 30, 23, 59), 20);
+        Task t2 = moduleBook.getOrCreate("CS2113").addDeadline("Project",
+                LocalDateTime.of(2026, 4, 30, 23, 59), 20);
         t2.markDone();
         moduleBook.getOrCreate("CS2100").addTodo("Tutorial").markDone();
 

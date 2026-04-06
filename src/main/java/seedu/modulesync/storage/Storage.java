@@ -127,19 +127,37 @@ public class Storage {
         default:
             throw new ModuleSyncException("Unsupported task type: " + type);
         }
+        // Restore completedAt if present (format: "completed:yyyy-MM-dd HH:mm")
+        for (String part : parts) {
+            String trimmed = part.trim();
+            if (trimmed.startsWith("completed:")) {
+                String dateStr = trimmed.substring("completed:".length()).trim();
+                try {
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATETIME_FORMAT);
+                    task.setCompletedAt(LocalDateTime.parse(dateStr, formatter));
+                } catch (DateTimeParseException ignored) {
+                    // Gracefully skip corrupted completedAt
+                }
+                break;
+            }
+        }
+
         assert task != null : "Decoded task must not be null";
         return task;
     }
 
     private Task decodeTodoTask(String[] parts, String moduleCode,
                                 String description, boolean isDone, String rawLine) throws ModuleSyncException {
-        if (parts.length != TODO_FIELDS_WITHOUT_WEIGHTAGE && parts.length != TODO_FIELDS_WITH_WEIGHTAGE) {
+        if (parts.length < TODO_FIELDS_WITHOUT_WEIGHTAGE) {
             throw new ModuleSyncException("Corrupted task entry: " + rawLine);
         }
         Todo todo = new Todo(moduleCode, description, isDone);
-        if (parts.length == TODO_FIELDS_WITH_WEIGHTAGE) {
-            int weightage = parseWeightage(parts[TODO_FIELDS_WITHOUT_WEIGHTAGE], rawLine);
-            todo.setWeightage(weightage);
+        if (parts.length >= TODO_FIELDS_WITH_WEIGHTAGE) {
+            String candidate = parts[TODO_FIELDS_WITHOUT_WEIGHTAGE].trim();
+            if (!candidate.startsWith("completed:")) {
+                int weightage = parseWeightage(candidate, rawLine);
+                todo.setWeightage(weightage);
+            }
         }
         return todo;
     }
@@ -160,15 +178,15 @@ public class Storage {
         if (parts.length < MIN_DEADLINE_FIELDS) {
             throw new ModuleSyncException("Corrupted deadline entry: " + rawLine);
         }
-        if (parts.length != DEADLINE_FIELDS_WITHOUT_WEIGHTAGE && parts.length != DEADLINE_FIELDS_WITH_WEIGHTAGE) {
-            throw new ModuleSyncException("Corrupted deadline entry: " + rawLine);
-        }
         try {
             LocalDateTime byDate = parseDueDate(parts[FIELD_DUE]);
             Deadline deadline = new Deadline(moduleCode, description, isDone, byDate);
-            if (parts.length == DEADLINE_FIELDS_WITH_WEIGHTAGE) {
-                int weightage = parseWeightage(parts[DEADLINE_FIELDS_WITHOUT_WEIGHTAGE], rawLine);
-                deadline.setWeightage(weightage);
+            if (parts.length >= DEADLINE_FIELDS_WITH_WEIGHTAGE) {
+                String candidate = parts[DEADLINE_FIELDS_WITHOUT_WEIGHTAGE].trim();
+                if (!candidate.startsWith("completed:")) {
+                    int weightage = parseWeightage(candidate, rawLine);
+                    deadline.setWeightage(weightage);
+                }
             }
             return deadline;
         } catch (DateTimeParseException e) {
