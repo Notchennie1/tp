@@ -7,6 +7,8 @@ call gradlew clean shadowJar
 
 rem ensure deterministic storage state
 if exist data\modules.txt del /q data\modules.txt
+if exist data\current.txt del /q data\current.txt
+if exist data\default.txt del /q data\default.txt
 
 cd build\libs
 for /f "tokens=*" %%a in (

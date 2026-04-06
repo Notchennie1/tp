@@ -1,5 +1,6 @@
 Welcome to ModuleSync
 What would you like to do?
+Active semester: default
 Added task under CS2113:
   1.[CS2113] [T][ ] Week8
 Now tracking 1 task(s) across modules.
