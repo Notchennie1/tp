@@ -1,11 +1,15 @@
 package seedu.modulesync.task;
 
+import java.time.LocalDateTime;
+
 public abstract class Task {
     private final String moduleCode;
     private final String description;
     private boolean isDone;
     /** Optional weightage (0–100). Null means no weightage has been assigned. */
     private Integer weightage;
+    /** Timestamp when the task was marked done. Null if not yet completed. */
+    private LocalDateTime completedAt;
 
     protected Task(String moduleCode, String description, boolean isDone) {
         assert moduleCode != null && !moduleCode.trim().isEmpty() : "Module code must not be null or empty";
@@ -14,6 +18,7 @@ public abstract class Task {
         this.description = description;
         this.isDone = isDone;
         this.weightage = null;
+        this.completedAt = null;
     }
 
     public String getModuleCode() {
@@ -28,12 +33,38 @@ public abstract class Task {
         return isDone;
     }
 
+    /**
+     * Marks this task as done and records the current timestamp as the completion time.
+     */
     public void markDone() {
         isDone = true;
+        completedAt = LocalDateTime.now();
     }
 
+    /**
+     * Marks this task as not done and clears the recorded completion timestamp.
+     */
     public void markUndone() {
         isDone = false;
+        completedAt = null;
+    }
+
+    /**
+     * Returns the timestamp when this task was marked as done, or null if not yet completed.
+     *
+     * @return the completion timestamp, or null
+     */
+    public LocalDateTime getCompletedAt() {
+        return completedAt;
+    }
+
+    /**
+     * Sets the completion timestamp directly (used when loading from storage).
+     *
+     * @param completedAt the completion timestamp, or null
+     */
+    public void setCompletedAt(LocalDateTime completedAt) {
+        this.completedAt = completedAt;
     }
 
     public String getStatusIcon() {
@@ -70,10 +101,20 @@ public abstract class Task {
 
     public String encode() {
         String extra = encodeExtra();
+        String completedAtStr = completedAt != null
+                ? completedAt.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+                : "";
+        String base;
         if (extra.isEmpty()) {
-            return String.join(" | ", moduleCode, String.valueOf(getTypeCode()), isDone ? "1" : "0", description);
+            base = String.join(" | ", moduleCode, String.valueOf(getTypeCode()), isDone ? "1" : "0", description);
+        } else {
+            base = String.join(" | ", moduleCode, String.valueOf(getTypeCode()), isDone ? "1" : "0",
+                    description, extra);
         }
-        return String.join(" | ", moduleCode, String.valueOf(getTypeCode()), isDone ? "1" : "0", description, extra);
+        if (!completedAtStr.isEmpty()) {
+            base = base + " | completed:" + completedAtStr;
+        }
+        return base;
     }
 
     protected String encodeExtra() {

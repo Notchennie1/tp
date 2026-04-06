@@ -112,14 +112,34 @@ public class Storage {
         boolean isDone = parseDone(parts[FIELD_DONE]);
         String description = parts[FIELD_DESC];
 
+        Task task;
         switch (type) {
         case "T":
-            return new Todo(moduleCode, description, isDone);
+            task = new Todo(moduleCode, description, isDone);
+            break;
         case "D":
-            return decodeDeadlineTask(parts, moduleCode, description, isDone, line);
+            task = decodeDeadlineTask(parts, moduleCode, description, isDone, line);
+            break;
         default:
             throw new ModuleSyncException("Unsupported task type: " + type);
         }
+
+        // Restore completedAt if present (format: "completed:yyyy-MM-dd HH:mm")
+        for (String part : parts) {
+            String trimmed = part.trim();
+            if (trimmed.startsWith("completed:")) {
+                String dateStr = trimmed.substring("completed:".length()).trim();
+                try {
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATETIME_FORMAT);
+                    task.setCompletedAt(LocalDateTime.parse(dateStr, formatter));
+                } catch (DateTimeParseException ignored) {
+                    // Gracefully skip corrupted completedAt
+                }
+                break;
+            }
+        }
+
+        return task;
     }
 
     /**

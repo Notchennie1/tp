@@ -303,4 +303,52 @@ public class Ui {
         System.out.println("Got it. I've updated the deadline for this task:");
         System.out.println("  " + task.formatForList(taskNumber));
     }
+
+    /**
+     * Displays task completion statistics for a module.
+     *
+     * @param moduleCode          the module code
+     * @param total               total number of tasks
+     * @param completedOnTime     count of tasks completed on time
+     * @param completedLate       count of tasks completed late
+     * @param active              count of currently active (not done) tasks
+     * @param avgDaysBeforeDeadline average days before deadline at completion time (NaN if unavailable)
+     */
+    //@@author Huang-Hau-Shuan
+    public void showModuleStats(String moduleCode, int total, int completedOnTime,
+                                int completedLate, int active, double avgDaysBeforeDeadline) {
+        assert moduleCode != null && !moduleCode.isBlank() : "Module code must not be blank for stats display";
+        assert total >= 0 : "Total task count must not be negative";
+
+        System.out.println("===== Stats for " + moduleCode + " =====");
+        System.out.println("Total tasks created   : " + total);
+
+        if (total == 0) {
+            System.out.println("No tasks to compute statistics for.");
+            return;
+        }
+
+        System.out.println(formatStatLine("Completed on time", completedOnTime, total));
+        System.out.println(formatStatLine("Completed late   ", completedLate, total));
+        System.out.println(formatStatLine("Currently active ", active, total));
+
+        if (!Double.isNaN(avgDaysBeforeDeadline)) {
+            System.out.printf("Avg completion time  : %.1f day(s) before deadline%n", avgDaysBeforeDeadline);
+        } else {
+            System.out.println("Avg completion time  : N/A (no completed deadline tasks)");
+        }
+    }
+
+    /**
+     * Formats a stat line with count and percentage.
+     *
+     * @param label the label for the stat
+     * @param count the count for this category
+     * @param total the total number of tasks
+     * @return the formatted line
+     */
+    private String formatStatLine(String label, int count, int total) {
+        double percent = total > 0 ? (count * 100.0 / total) : 0.0;
+        return String.format("%s : %d (%.1f%%)", label, count, percent);
+    }
 }
