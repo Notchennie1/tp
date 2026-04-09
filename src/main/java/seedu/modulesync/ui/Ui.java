@@ -733,6 +733,30 @@ public class Ui {
     }
 
     /**
+     * Displays the semester currently being viewed after a switch.
+     *
+     * @param semesterName the semester now being viewed
+     * @param isReadOnly whether the viewed semester is read-only
+     * @param previousSemesterName the previously active semester name, if any
+     */
+    public void showSemesterViewChanged(String semesterName, boolean isReadOnly, String previousSemesterName) {
+        assert semesterName != null && !semesterName.isBlank() : "Semester name must not be blank";
+
+        if (!isReadOnly) {
+            System.out.println("Now viewing " + semesterName + ".");
+            return;
+        }
+
+        String message = "Now viewing " + semesterName + " [read-only].";
+        if (previousSemesterName != null
+                && !previousSemesterName.isBlank()
+                && !previousSemesterName.equals(semesterName)) {
+            message += " Use 'semester switch " + previousSemesterName + "' to return.";
+        }
+        System.out.println(message);
+    }
+
+    /**
      * Displays a confirmation after archiving the current semester.
      *
      * @param semesterName the name of the archived semester
