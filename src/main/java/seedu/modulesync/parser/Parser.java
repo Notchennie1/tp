@@ -755,9 +755,11 @@ public class Parser {
      */
     private Command parseModule(String input) throws ModuleSyncException {
         String remainder = extractRemainder(input, CMD_MODULE_LENGTH);
-        
+
         if (remainder.isEmpty()) {
-            throw new ModuleSyncException("Usage: module list | module archive /mod MODULECODE | module unarchive /mod MODULECODE");
+            throw new ModuleSyncException(
+                    "Usage: module list | module archive /mod MODULECODE | "
+                            + "module unarchive /mod MODULECODE");
         }
 
         String[] parts = remainder.split("\\s+", 2);

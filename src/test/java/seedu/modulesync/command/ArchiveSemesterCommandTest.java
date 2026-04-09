@@ -14,7 +14,6 @@ import java.util.Scanner;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import seedu.modulesync.exception.ModuleSyncException;
 import seedu.modulesync.module.ModuleBook;
 import seedu.modulesync.semester.Semester;
 import seedu.modulesync.semester.SemesterBook;
