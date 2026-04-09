@@ -491,29 +491,278 @@ The following class diagram shows the main classes involved in computing semeste
 ---
 
 ## Product scope
+
 ### Target user profile
 
-{Describe the target user profile}
+ModuleSync targets **NUS undergraduate students** who are simultaneously managing coursework across four to six modules, an internship search, and co-curricular commitments. More specifically, the target user:
+
+* is **comfortable using a terminal** and prefers typed commands over graphical interfaces
+* types faster than they click, and finds GUI task managers slow and distracting
+* organises work **by module code** (CS2113, MA1521, etc.) as their primary mental model
+* needs to track both simple to-do tasks and deadline tasks with exact due dates and times
+* wants to record **percentage weightages** against assessments so priority is reflected in their task list
+* wants to review **grades and CAP progress** across semesters without switching to a separate tool
+* may need to **reference past semesters** without accidentally editing closed academic records
 
 ### Value proposition
 
-{Describe the value proposition: what problem does it solve?}
+ModuleSync solves the problem of context-switching overhead for students who currently spread task tracking across multiple tools — a notes app for todos, a calendar for deadlines, a spreadsheet for grades. ModuleSync consolidates all three into one keyboard-driven CLI:
+
+* **One-shot task creation** — a single `add` command records a task under its module, optionally with a deadline and a weightage percentage. No multi-step wizard, no mouse required.
+* **Module-centric organisation** — tasks are grouped by module code, mirroring how a student's semester actually works rather than imposing an arbitrary folder structure.
+* **Deadline intelligence** — automatic overdue warnings on startup, same-day conflict detection (`check /conflicts`), and 48-hour urgency filtering (`check /urgent`) surface crunch periods before they arrive.
+* **Grade and CAP tracking** — recording a grade against a module immediately feeds into semester and cumulative CAP calculations. No separate spreadsheet needed.
+* **Multi-semester history** — past semesters are archived in read-only mode, letting students safely reference old tasks and grades without the risk of accidental edits.
+* **Human-readable storage** — data files are plain UTF-8 text. A student can read, back up, or migrate their data without any proprietary tools.
+
+---
 
 ## User Stories
 
-|Version| As a ... | I want to ... | So that I can ...|
-|--------|----------|---------------|------------------|
-|v1.0|new user|see usage instructions|refer to them when I forget how to use the application|
-|v2.0|user|find a to-do item by name|locate a to-do without having to go through the entire list|
+| Version | As a … | I want to … | So that I can … |
+|---------|--------|-------------|-----------------|
+| v1.0 | new user | see a list of all available commands | learn how to use the application without reading external documentation |
+| v1.0 | student | add a task under a module code | organise my work by module the way I already think about it |
+| v1.0 | student | mark a task as done | keep track of what I have finished |
+| v1.0 | student | unmark a task | correct a mistake or reopen work I thought was complete |
+| v1.0 | student | delete a task | remove tasks that are no longer relevant |
+| v1.0 | student | list all my tasks | get an overview of everything I still need to do |
+| v2.0 | student | add a deadline to a task with an exact date and time | know precisely when each assessment is due |
+| v2.0 | student | assign a weightage percentage to a task | see at a glance which assessments matter most to my grade |
+| v2.0 | student | update the weightage of an existing task | correct a percentage I entered wrongly without deleting and recreating the task |
+| v2.0 | student | update the deadline of an existing task | correct a date I entered wrongly without deleting and recreating the task |
+| v2.0 | student | see only unfinished tasks for a specific module | focus on remaining work without wading through completed items |
+| v2.0 | student | view all deadlines sorted by due date | plan the next few weeks at a glance |
+| v2.0 | student | view my highest-priority tasks by priority score | focus on what is most urgent and most heavily weighted |
+| v2.0 | student | be warned about overdue tasks when I open the app | react immediately to anything I have missed |
+| v2.0 | student | check which days have multiple deadlines falling at the same time | plan ahead and avoid last-minute crunch |
+| v2.0 | student | check tasks due within the next 48 hours | focus on what is most immediately urgent |
+| v2.0 | student | view per-module completion statistics including on-time and late rates | reflect on my work habits for a specific module |
+| v2.0 | student | view a semester-wide task summary | understand my overall workload and progress at a glance |
+| v2.0 | student | record a final grade for a module | keep all academic records in one place |
+| v2.0 | student | view my current semester CAP and cumulative CAP | track my academic standing without opening a separate spreadsheet |
+| v2.0 | student | view my full grade history across all semesters | understand how my performance has evolved over time |
+| v2.0 | student | archive a module so it disappears from my main task list | reduce clutter once a module is fully completed |
+| v2.0 | student | restore an archived module | access its tasks again if I archived it by mistake |
+| v2.0 | student | create a new semester and switch to it | start a fresh task list without losing previous data |
+| v2.0 | student | switch to a past semester in read-only mode | safely reference old tasks and grades without risking accidental edits |
+| v2.0 | student | see which semester I am currently working in on startup | immediately know whether I am in the right context |
 
 ## Non-Functional Requirements
 
-{Give non-functional requirements}
+1. **Java version** — ModuleSync requires Java 17 or above. It must run on any operating system that provides a compatible JVM (Windows, macOS, Linux).
+2. **No network dependency** — ModuleSync is a fully offline, single-user application. It must function without any internet connection.
+3. **Response time** — All commands must respond within one second on a machine with at least 4 GB of RAM and a modern dual-core processor, for a dataset of up to 500 tasks across 10 semesters.
+4. **Data durability** — Every mutating command saves immediately to the relevant semester file before returning control to the user. A crash after a successful save must not cause data loss for that command.
+5. **Human-readable storage** — Data files must be plain UTF-8 text that a user can open and understand in any text editor without special tooling.
+6. **Single-user** — ModuleSync is designed for use by one person on one machine. Concurrent access to the same data directory by multiple processes is not supported and not required.
+7. **No GUI dependency** — The application must operate entirely through a terminal. No graphical display system (e.g. a desktop environment) is required.
+8. **Portability** — Transferring the `data/` folder to another machine running the same Java version must fully restore all semesters, tasks, and grades without any conversion step.
+
+---
 
 ## Glossary
 
-* *glossary item* - Definition
+| Term | Definition |
+|------|-----------|
+| **Module** | An academic course identified by a module code (e.g. `CS2113`). In ModuleSync, a module is created automatically the first time a task is added under its code. |
+| **Task** | A unit of work belonging to a module. A task is either a **Todo** (no due date) or a **Deadline** (has a due date and time). |
+| **Weightage** | An integer from `0` to `100` representing a task's percentage contribution to the module's overall grade. Weightage is optional — tasks without it are still fully functional. |
+| **Semester** | A named academic period (e.g. `AY2526-S2`) that groups a set of modules and their tasks. Each semester is stored in its own file under `data/`. |
+| **Active semester** | The semester the user is currently working in. All mutating commands (`add`, `delete`, `mark`, etc.) operate on the active semester's `ModuleBook`. |
+| **Archived semester** | A semester that has been closed and marked read-only. View commands (`list`, `cap`, `grades list`) still work; mutating commands are rejected. |
+| **Archived module** | A module within the active semester that has been hidden from the main `list` and `list /deadlines` views. It can be restored with `module unarchive`. |
+| **Display index** | The 1-based integer shown next to each task by the `list` command. Used as the identifier for `mark`, `unmark`, `delete`, `setweight`, and `setdeadline`. |
+| **CAP** | Cumulative Average Point — NUS's GPA metric on a 5.0 scale. Only CAP-bearing grades (`A+`, `A`, `A-`, `B+`, etc.) contribute. Grades such as `S`, `U`, `CS`, and `CU` are excluded. |
+| **MCs** | Modular Credits — the credit-unit weight of a module. Used as the denominator when computing weighted CAP averages. |
+| **Priority score** | A numeric value computed from a task's weightage (and deadline proximity for `Deadline` tasks) used to rank tasks in `list /top`. |
+| **`ModuleBook`** | The in-memory data structure that holds all `Module` objects for one semester. Each `Semester` owns exactly one `ModuleBook`. |
+| **`SemesterBook`** | The in-memory registry of all `Semester` objects. Maintains the pointer to the currently active semester. |
+| **`Command` (abstract)** | The base class for all executable user actions. `Parser` creates a concrete subclass; `ModuleSync` calls its `execute()` method. |
+| **`SemesterCommand`** | A subclass of `Command` for semester-lifecycle operations (switch, archive, list). These bypass the read-only guard because they operate at the semester level, not on tasks. |
+| **Read-only guard** | The check in `ModuleSync.run()` that rejects any command where `isMutating()` returns `true` if the current semester is archived. |
+
+---
 
 ## Instructions for manual testing
 
-{Give instructions on how to do a manual product testing e.g., how to load sample data to be used for testing}
+> **Note:** These instructions assume you are running the application from the project root using `./gradlew run` or `java -jar build/libs/modulesync.jar`. All commands are typed at the `>` prompt.
+
+### 1. Launch and first-run setup
+
+1. Delete the `data/` folder if it exists, to start from a clean state.
+2. Launch the application. You should see the welcome message and a prompt indicating no active semester.
+3. Create and switch to a new semester:
+   ```
+   semester new AY2526-S2
+   ```
+   Expected: `Created and switched to new semester: AY2526-S2`
+
+---
+
+### 2. Adding tasks
+
+```
+add /mod CS2113 /task Week 10 Quiz
+add /mod CS2113 /task Final Project /w 30
+add /mod CS2113 /task Submit iP /due 2026-04-15 /w 10
+add /mod CS2113 /task Project checkpoint /due 2026-04-15-0900
+add /mod MA1521 /task Problem Set 4 /w 20
+add /mod MA1521 /task Final Exam /due 2026-05-01-1300 /w 40
+```
+
+Expected after each `add`: confirmation showing the task description, module code, and weightage (if provided).
+
+---
+
+### 3. Listing tasks
+
+```
+list
+list /mod CS2113
+list /deadlines
+list /top 3
+list /notdone /mod CS2113
+modules
+```
+
+Expected:
+- `list` shows all tasks numbered from 1 with module codes, type (`T`/`D`), done status, and weightage where set.
+- `list /deadlines` shows only deadline tasks sorted earliest-first.
+- `list /top 3` shows the three tasks with the highest priority scores.
+- `list /notdone /mod CS2113` shows only incomplete CS2113 tasks, using **the same global indices as `list`**.
+- `modules` shows `CS2113 (4 task(s))` and `MA1521 (2 task(s))`.
+
+---
+
+### 4. Marking, unmarking, and deleting
+
+```
+mark 1
+list
+unmark 1
+list
+delete 6
+list
+```
+
+Expected:
+- After `mark 1`: task 1 shows `[X]`.
+- After `unmark 1`: task 1 shows `[ ]` again.
+- After `delete 6`: task count decreases by one; subsequent tasks renumber.
+
+---
+
+### 5. Weightage and deadline updates
+
+```
+setweight 1 15
+list /mod CS2113
+editweight 1 /w 20
+setdeadline 1 /by 2026-04-20
+editdeadline 1 /by 2026-04-20-2359
+list /mod CS2113
+```
+
+Expected: task 1 shows the updated weightage and deadline after each command.
+
+---
+
+### 6. Conflict and urgency checks
+
+Set the system clock or use already-close deadlines and run:
+
+```
+check /conflicts
+check /urgent
+```
+
+Expected:
+- `check /conflicts` lists any calendar days where two or more deadline tasks fall on the same date (e.g. April 15 has two tasks in the sample above).
+- `check /urgent` lists incomplete deadline tasks due within 48 hours of the current time.
+
+---
+
+### 7. Per-module and semester statistics
+
+```
+stats /mod CS2113
+semesterstats
+```
+
+Expected:
+- `stats /mod CS2113` shows total tasks, on-time/late/active counts and percentages, and average days-before-deadline (N/A until deadline tasks are marked done with a completion timestamp).
+- `semesterstats` shows module count, overall task counts and completion percentage, type breakdown, and weightage completion.
+
+---
+
+### 8. Grades and CAP
+
+```
+grade /mod CS2113 /grade A+
+grade /mod MA1521 /grade B+
+cap
+grades list
+```
+
+Expected:
+- `cap` shows a semester CAP calculated from the two grades and their credits (default 0 MCs until set — CAP will show N/A until credits are non-zero; set credits via the grade command if implemented, or note this limitation).
+- `grades list` shows both modules tabulated with their grade points.
+
+---
+
+### 9. Module archiving
+
+```
+module archive /mod MA1521
+list
+modules
+module unarchive /mod MA1521
+list
+```
+
+Expected:
+- After archiving: `list` no longer shows MA1521 tasks. `modules` still shows it marked `[archived]`.
+- After unarchiving: MA1521 tasks reappear in `list`.
+
+---
+
+### 10. Multi-semester workflow
+
+```
+semester new AY2527-S1
+add /mod CS3230 /task Assignment 1
+list
+semester switch AY2526-S2
+list
+```
+
+Expected:
+- After switching to `AY2527-S1`: only CS3230 tasks are shown.
+- After switching back to `AY2526-S2`: only the original semester's tasks are shown.
+
+---
+
+### 11. Read-only guard (archived semester)
+
+```
+semester switch AY2526-S2
+```
+Then archive AY2526-S2 from within it:
+```
+semester new AY2527-S1
+semester switch AY2526-S2
+add /mod CS2113 /task Should Fail
+```
+
+Expected: the `add` command is rejected with a message indicating the semester is archived and read-only.
+
+---
+
+### 12. Persistence across restarts
+
+1. Add at least one task, mark it done, and set its weightage.
+2. Exit with `bye`.
+3. Relaunch the application.
+
+Expected: all tasks, their done status, and their weightage are restored exactly as they were before exit.
