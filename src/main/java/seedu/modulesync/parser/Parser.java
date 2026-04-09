@@ -14,6 +14,7 @@ import seedu.modulesync.command.CheckUrgentCommand;
 import seedu.modulesync.command.Command;
 import seedu.modulesync.command.DeleteCommand;
 import seedu.modulesync.command.EditDeadlineCommand;
+import seedu.modulesync.command.EditWeightCommand;
 import seedu.modulesync.command.ExitCommand;
 import seedu.modulesync.command.GradeCommand;
 import seedu.modulesync.command.ListCommand;
@@ -52,6 +53,7 @@ public class Parser {
     private static final String CMD_UNMARK = "unmark";
     private static final String CMD_DELETE = "delete";
     private static final String CMD_SETWEIGHT = "setweight";
+    private static final String CMD_EDITWEIGHT = "editweight";
     private static final String CMD_SETDEADLINE = "setdeadline";
     private static final String CMD_EDITDEADLINE = "editdeadline";
     private static final String CMD_STATS = "stats";
@@ -81,6 +83,7 @@ public class Parser {
     private static final int CMD_UNMARK_LENGTH = 6;
     private static final int CMD_DELETE_LENGTH = 6;
     private static final int CMD_SETWEIGHT_LENGTH = 9;
+    private static final int CMD_EDITWEIGHT_LENGTH = 10;
     private static final int CMD_SETDEADLINE_LENGTH = 11;
     private static final int CMD_EDITDEADLINE_LENGTH = 12;
     private static final int CMD_STATS_LENGTH = 5;
@@ -190,6 +193,9 @@ public class Parser {
         }
         if (trimmed.toLowerCase().startsWith(CMD_SETWEIGHT)) {
             return parseSetWeight(trimmed);
+        }
+        if (trimmed.toLowerCase().startsWith(CMD_EDITWEIGHT)) {
+            return parseEditWeight(trimmed);
         }
         if (trimmed.toLowerCase().startsWith(CMD_SETDEADLINE)) {
             return parseSetDeadline(trimmed);
@@ -472,6 +478,35 @@ public class Parser {
         assert taskNumber > 0 : "Parsed task number must be strictly positive";
         assert weightage >= 0 && weightage <= 100 : "Parsed weightage must be 0–100";
         return new SetWeightCommand(taskNumber, weightage);
+    }
+
+    /**
+     * Parses an "editweight" command.
+     * Format: {@code editweight TASK_NUMBER /w PERCENT}
+     *
+     * @param input the full editweight command string
+     * @return an {@link EditWeightCommand} with the specified task number and weightage
+     * @throws ModuleSyncException if the arguments are missing, non-integer, or out of range
+     */
+    private Command parseEditWeight(String input) throws ModuleSyncException {
+        String remainder = extractRemainder(input, CMD_EDITWEIGHT_LENGTH);
+        if (remainder.isEmpty()) {
+            throw new ModuleSyncException("Usage: editweight TASK_NUMBER /w PERCENT");
+        }
+        String[] tokens = remainder.split("/w");
+        if (tokens.length < 2) {
+            throw new ModuleSyncException("Usage: editweight TASK_NUMBER /w PERCENT");
+        }
+        int taskNumber = parseTaskNumber(tokens[0].trim(), CMD_EDITWEIGHT);
+        String weightageRaw = tokens[1].trim();
+        if (weightageRaw.isEmpty()) {
+            throw new ModuleSyncException("Usage: editweight TASK_NUMBER /w PERCENT");
+        }
+        Integer weightage = parseWeightage(weightageRaw);
+        if (weightage == null) {
+            throw new ModuleSyncException("Usage: editweight TASK_NUMBER /w PERCENT");
+        }
+        return new EditWeightCommand(taskNumber, weightage);
     }
 
     /**
