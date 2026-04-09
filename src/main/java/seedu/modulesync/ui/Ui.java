@@ -6,10 +6,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.TreeMap;
 
+import seedu.modulesync.grade.GradeProgressSummary;
 import seedu.modulesync.module.Module;
 import seedu.modulesync.module.ModuleBook;
 import seedu.modulesync.semester.Semester;
@@ -18,6 +20,12 @@ import seedu.modulesync.task.Deadline;
 import seedu.modulesync.task.Task;
 
 public class Ui {
+    private static final String NO_GRADED_MODULES_MESSAGE =
+            "No graded modules found. A grade summary cannot be generated yet.";
+    private static final int MODULE_COLUMN_WIDTH = 8;
+    private static final int CREDITS_COLUMN_WIDTH = 8;
+    private static final int GRADE_COLUMN_WIDTH = 7;
+
     private final Scanner scanner;
 
     public Ui(Scanner scanner) {
@@ -790,5 +798,148 @@ public class Ui {
         }
 
         System.out.printf("Cumulative CAP: %.2f%n", cumPoints / cumCredits);
+    }
+
+    /**
+     * Displays the semester-by-semester grade summary and cumulative progress.
+     *
+     * @param summary the calculated grade-progress summary
+     */
+    public void showGradeProgressSummary(GradeProgressSummary summary) {
+        assert summary != null : "Grade progress summary must not be null";
+
+        if (!summary.hasSemesterSummaries()) {
+            System.out.println(NO_GRADED_MODULES_MESSAGE);
+            return;
+        }
+
+        boolean isFirstSemester = true;
+        for (GradeProgressSummary.SemesterSummary semesterSummary : summary.getSemesterSummaries()) {
+            if (!isFirstSemester) {
+                System.out.println();
+            }
+
+            System.out.println(formatSemesterTitle(semesterSummary));
+            System.out.println(formatGradeHeaderRow());
+            for (GradeProgressSummary.ModuleResult moduleResult : semesterSummary.getModuleResults()) {
+                System.out.println(formatGradeModuleRow(moduleResult));
+            }
+            System.out.println(formatSemesterCapLine(semesterSummary));
+            System.out.println(formatCumulativeCapLine(semesterSummary));
+            isFirstSemester = false;
+        }
+    }
+
+    /**
+     * Formats the title line for one semester section in the grade summary.
+     *
+     * @param semesterSummary the semester summary to label
+     * @return the formatted semester title
+     */
+    private String formatSemesterTitle(GradeProgressSummary.SemesterSummary semesterSummary) {
+        String title = semesterSummary.getSemesterName() + " Results";
+        if (semesterSummary.isCurrentSemester() && !semesterSummary.isArchived()) {
+            return title + " (Current)";
+        }
+        if (semesterSummary.isArchived()) {
+            return title + " (Archived)";
+        }
+        return title;
+    }
+
+    /**
+     * Formats the header row for one semester's module-grade table.
+     *
+     * @return the formatted header row
+     */
+    private String formatGradeHeaderRow() {
+        return String.format(Locale.US, "%-" + MODULE_COLUMN_WIDTH + "s %-" + CREDITS_COLUMN_WIDTH
+                        + "s %-" + GRADE_COLUMN_WIDTH + "s %s",
+                "Module", "Credits", "Grade", "Points");
+    }
+
+    /**
+     * Formats one module row in the semester grade table.
+     *
+     * @param moduleResult the module result to render
+     * @return the formatted module row
+     */
+    private String formatGradeModuleRow(GradeProgressSummary.ModuleResult moduleResult) {
+        assert moduleResult != null : "Module result must not be null when formatting a grade row";
+        return String.format(Locale.US, "%-" + MODULE_COLUMN_WIDTH + "s %-" + CREDITS_COLUMN_WIDTH
+                        + "d %-" + GRADE_COLUMN_WIDTH + "s %s",
+                moduleResult.getModuleCode(),
+                moduleResult.getCredits(),
+                moduleResult.getGrade(),
+                formatGradePoint(moduleResult));
+    }
+
+    /**
+     * Formats the semester CAP line for one semester section.
+     *
+     * @param semesterSummary the semester summary to render
+     * @return the formatted semester CAP line
+     */
+    private String formatSemesterCapLine(GradeProgressSummary.SemesterSummary semesterSummary) {
+        assert semesterSummary != null : "Semester summary must not be null when formatting semester CAP";
+        if (!semesterSummary.hasSemesterCap()) {
+            return "Semester CAP: N/A (no CAP-bearing modules)";
+        }
+        return "Semester CAP: " + formatCapValue(semesterSummary.getSemesterCap())
+                + " (" + semesterSummary.getSemesterCredits() + " MCs)";
+    }
+
+    /**
+     * Formats the cumulative CAP line for one semester section.
+     *
+     * @param semesterSummary the semester summary to render
+     * @return the formatted cumulative CAP line
+     */
+    private String formatCumulativeCapLine(GradeProgressSummary.SemesterSummary semesterSummary) {
+        assert semesterSummary != null : "Semester summary must not be null when formatting cumulative CAP";
+        if (!semesterSummary.hasCumulativeCap()) {
+            return "Cumulative CAP: N/A (no CAP-bearing modules yet)";
+        }
+        return "Cumulative CAP: " + formatCapValue(semesterSummary.getCumulativeCap())
+                + " (" + semesterSummary.getCumulativeCredits() + " MCs across "
+                + semesterSummary.getCumulativeSemesterCount() + " "
+                + formatSemesterCountLabel(semesterSummary.getCumulativeSemesterCount()) + ")";
+    }
+
+    /**
+     * Formats the display string for a module's grade-point value.
+     *
+     * @param moduleResult the module result to inspect
+     * @return the formatted grade-point value, or {@code N/A} for non-CAP grades
+     */
+    private String formatGradePoint(GradeProgressSummary.ModuleResult moduleResult) {
+        assert moduleResult != null : "Module result must not be null when formatting grade points";
+        if (!moduleResult.hasGradePoint()) {
+            return "N/A";
+        }
+        return String.format(Locale.US, "%.1f", moduleResult.getGradePoint());
+    }
+
+    /**
+     * Formats a CAP value using a fixed two-decimal representation.
+     *
+     * @param capValue the CAP value to format
+     * @return the formatted CAP value
+     */
+    private String formatCapValue(double capValue) {
+        return String.format(Locale.US, "%.2f", capValue);
+    }
+
+    /**
+     * Formats the word used after the cumulative semester count.
+     *
+     * @param semesterCount the semester count to describe
+     * @return the singular or plural semester label
+     */
+    private String formatSemesterCountLabel(int semesterCount) {
+        if (semesterCount == 1) {
+            return "semester";
+        }
+        return "semesters";
     }
 }
