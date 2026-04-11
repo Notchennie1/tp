@@ -374,8 +374,22 @@ public class Parser {
      *
      * @param due the raw due string
      * @return the parsed {@link LocalDateTime}
+     * @throws ModuleSyncException if the time is 2400 or greater
      */
-    private LocalDateTime parseDateTime(String due) {
+    private LocalDateTime parseDateTime(String due) throws ModuleSyncException {
+        if (due.length() > DATE_ONLY_LENGTH) {
+            String timeString = due.substring(due.length() - 4);
+            try {
+                int time = Integer.parseInt(timeString);
+                if (time >= 2400) {
+                    throw new ModuleSyncException("Invalid time format! Please use 2359 for the end of the day, "
+                            + "or 0000 for the start of the next day.");
+                }
+            } catch (NumberFormatException ignored) {
+                // Let DateTimeParseException handle non-numeric inputs
+            }
+        }
+
         if (due.length() <= DATE_ONLY_LENGTH) {
             LocalDate date = LocalDate.parse(due);
             return date.atTime(23, 59);
