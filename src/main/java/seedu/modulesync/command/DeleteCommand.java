@@ -11,6 +11,18 @@ import seedu.modulesync.ui.Ui;
 
 public class DeleteCommand extends Command {
     private static final Logger logger = Logger.getLogger(DeleteCommand.class.getName());
+
+    static {
+        logger.setUseParentHandlers(false);
+        try {
+            java.util.logging.FileHandler fh = new java.util.logging.FileHandler("duke.log", true);
+            fh.setFormatter(new java.util.logging.SimpleFormatter());
+            logger.addHandler(fh);
+        } catch (Exception e) {
+            // Ignore logger initialization errors
+        }
+    }
+
     private final int displayIndex;
 
     public DeleteCommand(int displayIndex) {
