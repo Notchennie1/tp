@@ -488,7 +488,7 @@ The following class diagram shows the main classes involved in computing semeste
   * Pros: Works for both weighted and unweighted tasks.
   * Cons: The weightage completion metric may be absent until the user assigns weightage.
 
-//@@author codefuul
+//@@codefuul
 
 ### [Feature] CAP Calculator (`cap`)
 
@@ -577,6 +577,38 @@ The following sequence diagram illustrates the interactions involved when the sy
 * **Alternative 2: Log directly to the console/UI.**
   * Pros: Easier to implement, immediately visible during development.
   * Cons: Ruins the clean user experience by cluttering the terminal output with internal operational details.
+
+### [Feature] Explicit Module Lifecycles (`add /mod` & `delete module /mod`)
+
+#### Implementation
+
+To safely facilitate the configuration of workload modules prior to assigning any explicit task deadlines or grades, the `ModuleBook` array is bound natively to `add /mod [MOD]` to implicitly drop an orphaned module string footprint into the tracker. It safely checks the existing arrays and uses `getOrCreate` to guarantee zero duplication conflicts. When `delete module /mod [MOD]` is called, the `deleteModule(String)` utility natively queries the linked Hash Map and severs the memory mapping entirely.
+
+#### Design Considerations
+
+**Aspect: How to parse the add command gracefully without task constraints?**
+
+* **Alternative 1 (Current choice): Dynamically detect task bounds through Parser constraints.**
+  * Pros: Reuses the existing `CMD_ADD` array loop syntax perfectly without creating overlapping duplicate commands. 
+  * Cons: Adds a layer of complexity inside `parseAdd()`.
+
+* **Alternative 2: Add a separate `moduleadd` command.**
+  * Pros: Easier to parse.
+  * Cons: Inconvenient to the end user who prefers standard UI verbs.
+
+### [Feature] CAP Calculation Bounds Engine (`setcredits`)
+
+#### Implementation
+
+The `setcredits` bounding limit enforces absolute `0` to `40` Credit (MC) limits on a single module string, matching standard University models. Upon entering `0`, the logic natively circumvents `CapCommand` computational limits, officially recognizing it as a neutral module and ignoring it during CAP multiplication arrays. Finally, if the tracker detects `> 32` combined credits during a semester scope tracking execution, it natively fires a `Ui` warning flag through `showHighSemesterCreditsWarning`.
+
+#### Design Considerations
+
+**Aspect: How to calculate 0-Credit Modules?**
+
+* **Alternative 1 (Current choice): Nullify multiplication outputs during `CapCommand` scans without crashing the tracker.**
+  * Pros: Accurately renders non-credit classes explicitly.
+  * Cons: Adds bounding filters internally.
 
 ---
 

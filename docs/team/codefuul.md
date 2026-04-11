@@ -32,6 +32,18 @@ Given below are my contributions to the project.
 
 **Highlights:** I implemented the core logic to safely identify and remove the task across the application state, complete with rigorous unit testing to ensure the deletion process is robust and handles boundary cases gracefully.
 
+### Feature 4: Explicit Module Tracking (`add /mod [MOD]` & `delete module /mod [MOD]`)
+**What it does:** Grants users explicit CRUD capabilities to instantly instantiate blank modules or completely drop them from memory without attaching tasks or grades.
+
+**Justification:** Allows safely generating bare modules to attach workload credits to early in the semester, and facilitates cleanly severing an entire module's local storage footprint dynamically if a user drops a class mid-semester.
+
+**Highlights:** Integrated an absolute separation of bounds inside the `Parser` tree to intercept these paths dynamically, complete with heavily automated execution-mechanic tests via JUnit mapping.
+
+### Feature 5: Stabilized Credits Engine (`setcredits bounds`)
+**What it does:** Upgraded `setcredits` bounding systems to officially recognize `0` credits for non-credit bearing modules (without crashing CAP formulas), blocked workloads `> 40`, and triggered aggregated warning flags if a student hits `> 32` modules across their semester workload.
+
+**Justification:** Perfectly matches real university registration constraints while acting as an invisible safety bumper protecting students from catastrophic mathematical typos in their workload planning.
+
 ## Code Contributed
 [RepoSense link](#) 
 
@@ -54,6 +66,7 @@ Given below are my contributions to the project.
 ### Developer Guide
 - Authored the implementation details for the `check /urgent` and `setdeadline` commands, including the sequence of interactions between the `Parser`, `Command`, and `TaskList` components.
 - Documented the system-wide logging strategy using `java.util.logging.Logger` and the usage of the `duke.log` file for debugging.
+- Drafted the API usage documentation regarding Explicit Module Creation and Bounding Credit Lifecycles inside the Developer Guide implementation blocks.
 
 ### About Us
 - Updated the **About Us** page to include my developer profile, illustrating my role and linking to my GitHub profile for better team transparency.

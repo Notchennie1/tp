@@ -51,9 +51,19 @@ Overdue warning: 1 task(s) have passed their deadlines.
 2.[CS2113] [D][ ] Project checkpoint (was due: Apr 08 2026, 09:00)
 ```
 
+### Adding a tracked module explicitly: `add /mod`
+
+Creates a blank module in your active semester. This is useful for tracking a coursework grade or CAP credits early in the semester without being forced to attach a dummy task to it.
+
+Format: `add /mod MODULE_CODE`
+
+Example:
+
+* `add /mod CS1010S`
+
 ### Adding a task: `add`
 
-Adds a task under a module. If `/due` is provided, the task is recorded as a deadline.
+Adds a task under a module. If `/due` is provided, the task is recorded as a deadline. (Note: Tracking a task implicitly creates the module for you as well!).
 
 Format: `add /mod MODULE_CODE /task DESCRIPTION [/due YYYY-MM-DD[-HHmm]] [/w PERCENT]`
 
@@ -221,6 +231,16 @@ Example:
 
 * `delete 3`
 
+### Deleting a tracked module: `delete module`
+
+Completely removes a targeted module from the system alongside all of its internally recorded tasks and grades.
+
+Format: `delete module /mod MODULE_CODE`
+
+Example:
+
+* `delete module /mod CS1010S`
+
 ### Assigning or editing weightage: `setweight` / `editweight`
 
 Assigns or updates the percentage grading weight of an existing task.
@@ -290,6 +310,17 @@ Example output:
 Urgent tasks (due within 48 hours):
   1.[CS2113] [D][ ] Final Project (due: 12 hours)
 ```
+
+### Setting modular credits for CAP calculation: `setcredits`
+
+Explicitly maps a modular credit (MC) weight to a module. This is strictly constrained between 0 to 40 credits per module. Setting 0 correctly neutralizes the module from CAP formulas without crashing the tracker! (Note: Exceeding 32 total MCs actively flags a semester workload warning.)
+
+Format: `setcredits /mod MODULE_CODE /mc CREDITS`
+
+Examples:
+
+* `setcredits /mod CS1010S /mc 4`
+* `setcredits /mod CFG1002 /mc 0`
 
 ### Recording a module grade: `grade`
 
@@ -445,6 +476,7 @@ for that command.
 
 | Action | Format |
 |--------|--------|
+| Add a tracked module | `add /mod MODULE_CODE` |
 | Add task | `add /mod MODULE_CODE /task DESCRIPTION [/due YYYY-MM-DD[-HHmm]] [/w PERCENT]` |
 | List all tasks | `list` |
 | List tasks by module | `list /mod MODULE_CODE` |
@@ -458,6 +490,7 @@ for that command.
 | Mark task as done | `mark TASK_NUMBER` |
 | Mark all tasks in a module as done | `mark /mod MODULE_CODE /all` |
 | Unmark task as not done | `unmark TASK_NUMBER` |
+| Delete a tracked module | `delete module /mod MODULE_CODE` |
 | Delete task | `delete TASK_NUMBER` |
 | Set task weightage | `setweight TASK_NUMBER PERCENT` |
 | Edit task weightage | `editweight TASK_NUMBER /w PERCENT` |
@@ -465,6 +498,7 @@ for that command.
 | Edit an existing deadline | `editdeadline TASK_NUMBER /by YYYY-MM-DD[-HHmm]` |
 | Check same-day deadline conflicts | `check /conflicts` or `/conflicts` |
 | Check urgent deadlines | `check /urgent` or `/urgent` |
+| Set modular credits | `setcredits /mod MODULE_CODE /mc CREDITS` |
 | Record a module grade | `grade /mod MODULE_CODE /grade GRADE_VALUE` |
 | View CAP summary | `cap` |
 | View grade history | `grades list` |
