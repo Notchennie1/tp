@@ -287,11 +287,11 @@ public class Parser {
         }
 
         java.util.List<String> validGrades = java.util.List.of(
-                "A+", "A", "A-", "B+", "B", "B-", "C+", "C", "D+", "D", "F", "CS", "CU"
+                "A+", "A", "A-", "B+", "B", "B-", "C+", "C", "D+", "D", "F", "CS", "CU", "S", "U"
         );
         if (!validGrades.contains(grade.trim().toUpperCase())) {
             throw new ModuleSyncException(
-                    "Invalid grade! Accepted values are: A+, A, A-, B+, B, B-, C+, C, D+, D, F, CS, CU");
+                    "Invalid grade! Accepted values are: A+, A, A-, B+, B, B-, C+, C, D+, D, F, CS, CU, S, U");
         }
 
         assert module != null && !module.trim().isEmpty() : "Module code should be parsed for grade command";

@@ -150,6 +150,8 @@ class ParserTest {
         assertTrue(parser.parse("grade /grade B /mod CS3243") instanceof GradeCommand);
         assertTrue(parser.parse("grade /mod CS2113 /grade CS") instanceof GradeCommand);
         assertTrue(parser.parse("grade /mod CS2113 /grade CU") instanceof GradeCommand);
+        assertTrue(parser.parse("grade /mod CS2113 /grade S") instanceof GradeCommand);
+        assertTrue(parser.parse("grade /mod CS2113 /grade U") instanceof GradeCommand);
     }
 
     @Test
