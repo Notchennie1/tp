@@ -24,6 +24,14 @@ public class EditWeightCommand extends Command {
     public void execute(ModuleBook moduleBook, Storage storage, Ui ui) throws ModuleSyncException {
         Task task = moduleBook.getTaskByDisplayIndex(taskNumber);
         
+        int currentTotal = moduleBook.getModule(task.getModuleCode()).getTasks().getTotalWeightage();
+        int oldWeightage = task.hasWeightage() ? task.getWeightage() : 0;
+        
+        if (currentTotal - oldWeightage + weightage > 100) {
+            throw new ModuleSyncException("Error: This action would cause the total module weightage to exceed 100%. "
+                    + "Current total: " + currentTotal + "%");
+        }
+
         Integer previous = task.getWeightage();
         task.setWeightage(weightage);
         ui.showWeightSet(task, taskNumber, previous);
