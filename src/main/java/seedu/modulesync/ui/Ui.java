@@ -825,6 +825,23 @@ public class Ui {
         }
     }
 
+    public void showCreditsSet(String moduleCode, int credits) {
+        System.out.println("Credits for module " + moduleCode.toUpperCase() + " set to " + credits + ".");
+    }
+
+    public void showHighSemesterCreditsWarning(int totalCredits) {
+        System.out.println("Warning: You now have " + totalCredits + " total modular credits for this semester. "
+                + "Please check if this is correct.");
+    }
+
+    public void showModuleAdded(String moduleCode) {
+        System.out.println("Module " + moduleCode.toUpperCase() + " has been successfully added to your list!");
+    }
+
+    public void showModuleDeleted(String moduleCode) {
+        System.out.println("Module " + moduleCode.toUpperCase() + " has been cleanly removed from your list!");
+    }
+
     /**
      * Displays the calculated Semester and Cumulative CAP.
      *

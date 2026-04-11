@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 import seedu.modulesync.command.AddDeadlineCommand;
+import seedu.modulesync.command.AddModuleCommand;
 import seedu.modulesync.command.AddTodoCommand;
 import seedu.modulesync.command.ArchiveModuleCommand;
 import seedu.modulesync.command.ArchiveSemesterCommand;
@@ -14,6 +15,7 @@ import seedu.modulesync.command.CheckConflictsCommand;
 import seedu.modulesync.command.CheckUrgentCommand;
 import seedu.modulesync.command.Command;
 import seedu.modulesync.command.DeleteCommand;
+import seedu.modulesync.command.DeleteModuleCommand;
 import seedu.modulesync.command.EditDeadlineCommand;
 import seedu.modulesync.command.EditWeightCommand;
 import seedu.modulesync.command.ExitCommand;
@@ -28,6 +30,7 @@ import seedu.modulesync.command.ListTopCommand;
 import seedu.modulesync.command.MarkCommand;
 import seedu.modulesync.command.NewSemesterCommand;
 import seedu.modulesync.command.SemesterStatsCommand;
+import seedu.modulesync.command.SetCreditsCommand;
 import seedu.modulesync.command.SetDeadlineCommand;
 import seedu.modulesync.command.SetWeightCommand;
 import seedu.modulesync.command.StatsCommand;
@@ -56,12 +59,15 @@ public class Parser {
     private static final String CMD_DELETE = "delete";
     private static final String CMD_SETWEIGHT = "setweight";
     private static final String CMD_EDITWEIGHT = "editweight";
+    private static final String CMD_SETCREDITS = "setcredits";
     private static final String CMD_SETDEADLINE = "setdeadline";
     private static final String CMD_EDITDEADLINE = "editdeadline";
     private static final String CMD_STATS = "stats";
     private static final String CMD_GRADES = "grades";
     private static final String CMD_GRADE = "grade";
     private static final String CMD_MODULE = "module";
+    private static final String CMD_MODULEADD = "moduleadd";
+    private static final String CMD_MODULEDELETE = "moduledelete";
     private static final String CMD_SEMESTER = "semester";
     private static final String CMD_SWITCH = "switch";
     private static final String CMD_CAP = "cap";
@@ -84,10 +90,13 @@ public class Parser {
     private static final int CMD_DELETE_LENGTH = 6;
     private static final int CMD_SETWEIGHT_LENGTH = 9;
     private static final int CMD_EDITWEIGHT_LENGTH = 10;
+    private static final int CMD_SETCREDITS_LENGTH = 10;
     private static final int CMD_SETDEADLINE_LENGTH = 11;
     private static final int CMD_EDITDEADLINE_LENGTH = 12;
     private static final int CMD_STATS_LENGTH = 5;
     private static final int CMD_MODULE_LENGTH = 6;
+    private static final int CMD_MODULEADD_LENGTH = 9;
+    private static final int CMD_MODULEDELETE_LENGTH = 12;
     private static final int CMD_GRADE_LENGTH = 5;
 
     private static final int PREFIX_MOD_LENGTH = 4;
@@ -169,6 +178,12 @@ public class Parser {
         if (trimmed.toLowerCase().startsWith(CMD_SEMESTER)) {
             return parseSemester(trimmed);
         }
+        if (trimmed.toLowerCase().startsWith(CMD_MODULEADD)) {
+            return parseModuleAdd(trimmed);
+        }
+        if (trimmed.toLowerCase().startsWith(CMD_MODULEDELETE)) {
+            return parseModuleDelete(trimmed);
+        }
         if (trimmed.toLowerCase().startsWith(CMD_MODULE)) {
             return parseModule(trimmed);
         }
@@ -195,6 +210,9 @@ public class Parser {
         }
         if (trimmed.toLowerCase().startsWith(CMD_EDITWEIGHT)) {
             return parseEditWeight(trimmed);
+        }
+        if (trimmed.toLowerCase().startsWith(CMD_SETCREDITS)) {
+            return parseSetCredits(trimmed);
         }
         if (trimmed.toLowerCase().startsWith(CMD_SETDEADLINE)) {
             return parseSetDeadline(trimmed);
@@ -536,6 +554,42 @@ public class Parser {
     }
 
     /**
+     * Parses a "setcredits" command.
+     * Format: {@code setcredits /mod MODULECODE /mc CREDITS}
+     *
+     * @param input the full setcredits command string
+     * @return a {@link SetCreditsCommand} with the parsed module code and credits
+     * @throws ModuleSyncException if the arguments are missing or malformed
+     */
+    private Command parseSetCredits(String input) throws ModuleSyncException {
+        String remainder = extractRemainder(input, CMD_SETCREDITS_LENGTH);
+        if (remainder.isEmpty()) {
+            throw new ModuleSyncException("Usage: setcredits /mod MODULECODE /mc CREDITS");
+        }
+
+        String[] tokens = remainder.split("/(?i)(?=(mod |mc ))");
+        String moduleCode = extractFieldFromTokens(tokens, PREFIX_MOD, PREFIX_MOD_LENGTH);
+        String mcStr = extractFieldFromTokens(tokens, "mc ", 3);
+
+        if (moduleCode == null || moduleCode.isEmpty() || mcStr == null || mcStr.isEmpty()) {
+            throw new ModuleSyncException("Usage: setcredits /mod MODULECODE /mc CREDITS");
+        }
+        validateModuleCode(moduleCode);
+
+        int credits;
+        try {
+            credits = Integer.parseInt(mcStr);
+            if (credits < 0 || credits > 40) {
+                throw new ModuleSyncException("Credits must be between 0 and 40.");
+            }
+        } catch (NumberFormatException e) {
+            throw new ModuleSyncException("Credits must be a valid integer between 0 and 40.");
+        }
+
+        return new SetCreditsCommand(moduleCode, credits);
+    }
+
+    /**
      * Parses an "editweight" command.
      * Format: {@code editweight TASK_NUMBER /w PERCENT}
      *
@@ -847,6 +901,42 @@ public class Parser {
             throw new ModuleSyncException("Usage: semester switch SEMESTER_NAME");
         }
         return new SwitchSemesterCommand(semesterBook, semesterStorage, semesterName);
+    }
+
+    /**
+     * Parses a "moduleadd" command.
+     * Format: {@code moduleadd /mod MODULE_CODE}
+     */
+    private Command parseModuleAdd(String input) throws ModuleSyncException {
+        String remainder = extractRemainder(input, CMD_MODULEADD_LENGTH);
+        if (remainder.isEmpty()) {
+            throw new ModuleSyncException("Usage: moduleadd /mod MODULE_CODE");
+        }
+        String[] tokens = remainder.split("/(?i)(?=(mod ))");
+        String moduleCode = extractFieldFromTokens(tokens, PREFIX_MOD, PREFIX_MOD_LENGTH);
+        if (moduleCode == null || moduleCode.isEmpty()) {
+            throw new ModuleSyncException("Usage: moduleadd /mod MODULE_CODE");
+        }
+        validateModuleCode(moduleCode);
+        return new AddModuleCommand(moduleCode);
+    }
+
+    /**
+     * Parses a "moduledelete" command.
+     * Format: {@code moduledelete /mod MODULE_CODE}
+     */
+    private Command parseModuleDelete(String input) throws ModuleSyncException {
+        String remainder = extractRemainder(input, CMD_MODULEDELETE_LENGTH);
+        if (remainder.isEmpty()) {
+            throw new ModuleSyncException("Usage: moduledelete /mod MODULE_CODE");
+        }
+        String[] tokens = remainder.split("/(?i)(?=(mod ))");
+        String moduleCode = extractFieldFromTokens(tokens, PREFIX_MOD, PREFIX_MOD_LENGTH);
+        if (moduleCode == null || moduleCode.isEmpty()) {
+            throw new ModuleSyncException("Usage: moduledelete /mod MODULE_CODE");
+        }
+        validateModuleCode(moduleCode);
+        return new DeleteModuleCommand(moduleCode);
     }
 
     /**

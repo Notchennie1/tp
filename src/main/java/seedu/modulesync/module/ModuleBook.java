@@ -142,5 +142,18 @@ public class ModuleBook {
 
         throw new ModuleSyncException("Task number does not exist: " + displayIndex);
     }
+
+    /**
+     * Removes a module by its code.
+     *
+     * @param code the module code to remove (case-insensitive)
+     * @return the removed module, or null if it did not exist
+     */
+    public Module deleteModule(String code) {
+        if (code == null) {
+            return null;
+        }
+        return modules.remove(code.toUpperCase());
+    }
 }
 
