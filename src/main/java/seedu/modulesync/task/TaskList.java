@@ -18,6 +18,21 @@ public class TaskList {
         }
     }
 
+    public int getTotalWeightage() {
+        return tasks.stream().filter(Task::hasWeightage).mapToInt(Task::getWeightage).sum();
+    }
+
+    private void checkWeightageLimit(Integer newWeightage) throws ModuleSyncException {
+        if (newWeightage == null) {
+            return;
+        }
+        int currentTotal = getTotalWeightage();
+        if (currentTotal + newWeightage > 100) {
+            throw new ModuleSyncException("Error: This action would cause the total module weightage to exceed 100%. "
+                    + "Current total: " + currentTotal + "%");
+        }
+    }
+
     public Task addTodo(String moduleCode, String description) throws ModuleSyncException {
         return addTodo(moduleCode, description, null);
     }
@@ -37,6 +52,7 @@ public class TaskList {
         if (description == null || description.trim().isEmpty()) {
             throw new ModuleSyncException("Task description cannot be empty.");
         }
+        checkWeightageLimit(weightage);
         checkDuplicateDescription(description);
         Todo todo = new Todo(moduleCode, description.trim());
         if (weightage != null) {
@@ -71,6 +87,7 @@ public class TaskList {
         if (description == null || description.trim().isEmpty()) {
             throw new ModuleSyncException("Task description cannot be empty.");
         }
+        checkWeightageLimit(weightage);
         checkDuplicateDescription(description);
         Deadline deadline = new Deadline(moduleCode, description.trim(), by);
         if (weightage != null) {
