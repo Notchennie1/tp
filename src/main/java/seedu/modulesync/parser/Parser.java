@@ -244,6 +244,17 @@ public class Parser {
         }
 
         String[] tokens = remainder.split("/(?i)(?=(mod |task |due |w |grade ))");
+
+        int wCount = 0;
+        for (String t : tokens) {
+            if (t.trim().toLowerCase().startsWith(PREFIX_WEIGHTAGE)) {
+                wCount++;
+            }
+        }
+        if (wCount > 1) {
+            throw new ModuleSyncException("Invalid input! The weightage flag (/w) can only be provided once.");
+        }
+
         String module = extractFieldFromTokens(tokens, PREFIX_MOD, PREFIX_MOD_LENGTH);
         String task = extractFieldFromTokens(tokens, PREFIX_TASK, PREFIX_TASK_LENGTH);
         String due = extractFieldFromTokens(tokens, PREFIX_DUE, PREFIX_DUE_LENGTH);
@@ -511,6 +522,9 @@ public class Parser {
         String[] tokens = remainder.split("/w");
         if (tokens.length < 2) {
             throw new ModuleSyncException("Usage: editweight TASK_NUMBER /w PERCENT");
+        }
+        if (tokens.length > 2) {
+            throw new ModuleSyncException("Invalid input! The weightage flag (/w) can only be provided once.");
         }
         int taskNumber = parseTaskNumber(tokens[0].trim(), CMD_EDITWEIGHT);
         String weightageRaw = tokens[1].trim();
