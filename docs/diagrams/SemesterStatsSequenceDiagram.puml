@@ -3,7 +3,6 @@
 skinparam sequenceArrowThickness 2
 skinparam roundcorner 5
 skinparam maxmessagesize 60
-skinparam sequenceParticipant underline
 
 Actor User as user
 Participant "ModuleSync" as app
@@ -20,7 +19,7 @@ activate app
 
 app -> ui : readCommand()
 activate ui
-ui --> app : rawInput
+ui --> app : rawInput : String
 deactivate ui
 
 app -> parser : parse(rawInput)
@@ -32,7 +31,7 @@ end note
 
 create cmd
 parser -> cmd : new SemesterStatsCommand(semesterBook, semesterName)
-parser --> app : cmd
+parser --> app : cmd : SemesterStatsCommand
 deactivate parser
 
 app -> cmd : execute(moduleBook, storage, ui)
@@ -43,24 +42,30 @@ activate ui
 
 ui -> moduleBook : getModules()
 activate moduleBook
-moduleBook --> ui : modules
+moduleBook --> ui : modules : Collection<Module>
 deactivate moduleBook
 
 loop for each module
   ui -> module : getTasks()
-  module --> ui : taskList
+  activate module
+  module --> ui : taskList : TaskList
+  deactivate module
+
   ui -> taskList : asUnmodifiableList()
-  taskList --> ui : tasks
+  activate taskList
+  taskList --> ui : tasks : List<Task>
+  deactivate taskList
 
   loop for each task
     ui -> task : isDone()
-    task --> ui : boolean
-    ui -> task : hasWeightage()
-    task --> ui : boolean
-    alt has weightage
-      ui -> task : getWeightage()
-      task --> ui : int
-    end
+    activate task
+    task --> ui : done : boolean
+    deactivate task
+
+    ui -> task : getWeightage()
+    activate task
+    task --> ui : weightage : Integer
+    deactivate task
   end
 end
 
