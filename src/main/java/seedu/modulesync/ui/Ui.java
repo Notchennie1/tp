@@ -511,7 +511,7 @@ public class Ui {
         assert task != null : "Deleted task must not be null";
         assert totalTasks >= 0 : "Total task count must not be negative";
         System.out.println("Noted. I've removed this task:");
-        System.out.println("  [" + task.getModuleCode() + "] " + task.formatForList(0));
+        System.out.println("  " + task.formatForDisplay());
         System.out.println("Now you have " + totalTasks + " task(s) in the list.");
     }
 
