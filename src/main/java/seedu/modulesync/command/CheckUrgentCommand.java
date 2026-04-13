@@ -49,7 +49,7 @@ public class CheckUrgentCommand extends Command {
 
         urgentTasks.sort(Comparator.comparing(Deadline::getBy));
 
-        System.out.println("⚠️ URGENT: " + urgentTasks.size() + " tasks due in next 48 hours");
+        System.out.println("[URGENT] " + urgentTasks.size() + " tasks due in next 48 hours");
         int count = 1;
         for (Deadline task : urgentTasks) {
             String formattedDate = task.getBy().format(DateTimeFormatter.ofPattern("MMM dd yyyy, HH:mm"));
