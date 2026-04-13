@@ -251,53 +251,92 @@ public class Parser {
             throw new ModuleSyncException(ADD_USAGE);
         }
 
-        // Find /task flag - if it exists, everything after it is the task description (terminal flag)
-        int taskFlagPos = findTaskFlagPosition(remainder);
-        String task = null;
-        String flagsPart = remainder;
+        // Validate that all flags are recognized
+        validateAllFlagsRecognized(remainder, new String[]{"mod", "task", "due", "w"});
 
-        if (taskFlagPos != -1) {
-            // /task found - split input into flags part (before /task) and task part (after /task)
-            flagsPart = remainder.substring(0, taskFlagPos).trim();
-            int taskContentStartPos = taskFlagPos + 1 + PREFIX_TASK_LENGTH; // +1 for the /
-            task = remainder.substring(taskContentStartPos).trim();
+        // Find critical flag positions: /mod, /task, /due, /w
+        int modPos = findFlagPosition(remainder, "mod");
+        int taskPos = findFlagPosition(remainder, "task");
+        int duePos = findFlagPosition(remainder, "due");
+        int weightPos = findFlagPosition(remainder, "w");
+
+        // /mod is required
+        if (modPos == -1) {
+            throw new ModuleSyncException(ADD_USAGE);
         }
 
-        // Parse flags from the part before /task (/mod, /due, /w)
-        String[] tokens = flagsPart.split("/(?i)(?=(mod |due |w ))");
-
-        int wCount = 0;
-        int dueCount = 0;
-        for (String t : tokens) {
-            String trimmed = t.trim().toLowerCase();
-            if (trimmed.startsWith(PREFIX_WEIGHTAGE)) {
-                wCount++;
-            } else if (trimmed.startsWith(PREFIX_DUE)) {
-                dueCount++;
-            }
-        }
-        if (wCount > 1) {
-            throw new ModuleSyncException("Invalid input! The weightage flag (/w) can only be provided once.");
-        }
-        if (dueCount > 1) {
-            throw new ModuleSyncException("Invalid input! The deadline flag (/due) can only be provided once.");
+        // If /task exists, it must come after /mod
+        if (taskPos != -1 && modPos > taskPos) {
+            throw new ModuleSyncException(
+                "Invalid input! /mod must appear before /task.");
         }
 
-        String module = extractFieldFromTokens(tokens, PREFIX_MOD, PREFIX_MOD_LENGTH);
-        String due = extractFieldFromTokens(tokens, PREFIX_DUE, PREFIX_DUE_LENGTH);
-        String weightageRaw = extractFieldFromTokens(tokens, PREFIX_WEIGHTAGE, PREFIX_WEIGHTAGE_LENGTH);
-
+        // Extract /mod MODULE_CODE
+        String module = extractFlagValue(remainder, modPos, "mod");
         if (module == null || module.isEmpty()) {
             throw new ModuleSyncException(ADD_USAGE);
         }
         validateModuleCode(module);
 
-        if (task == null || task.isEmpty()) {
+        // If no /task is provided, just add the module
+        if (taskPos == -1) {
             return new AddModuleCommand(module);
         }
-        
-        assert module != null && !module.trim().isEmpty() : "Module code should be parsed for add command";
-        assert task != null && !task.trim().isEmpty() : "Task description should be parsed for add command";
+
+        // Extract /task DESCRIPTION (up to next flag or end of string)
+        int taskEndPos = remainder.length();
+        if (duePos != -1 && duePos > taskPos) {
+            taskEndPos = Math.min(taskEndPos, duePos);
+        }
+        if (weightPos != -1 && weightPos > taskPos) {
+            taskEndPos = Math.min(taskEndPos, weightPos);
+        }
+
+        int taskContentStart = taskPos + PREFIX_TASK_LENGTH + 1;
+        String task = remainder.substring(taskContentStart, taskEndPos).trim();
+
+        // Check for duplicate /due flags
+        if (countFlagOccurrences(remainder, "due") > 1) {
+            throw new ModuleSyncException(
+                "Invalid input! The deadline flag (/due) can only be provided once.");
+        }
+
+        // Check for duplicate /w flags
+        if (countFlagOccurrences(remainder, "w") > 1) {
+            throw new ModuleSyncException(
+                "Invalid input! The weightage flag (/w) can only be provided once.");
+        }
+
+        // Extract optional /due and /w from the remainder
+        String due = null;
+        String weightageRaw = null;
+
+        if (duePos != -1) {
+            due = extractFlagValue(remainder, duePos, "due");
+            if (due == null || due.isEmpty()) {
+                throw new ModuleSyncException(
+                    "Invalid input! /due requires a date value. "
+                    + "Format: /due YYYY-MM-DD or /due YYYY-MM-DD-HHmm");
+            }
+        }
+
+        if (weightPos != -1) {
+            weightageRaw = extractFlagValue(remainder, weightPos, "w");
+            if (weightageRaw == null || weightageRaw.isEmpty()) {
+                throw new ModuleSyncException(
+                    "Invalid input! /w requires an integer from 0 to 100.");
+            }
+        }
+
+        // If task is empty after /task, still treat as module add
+        if (task.isEmpty()) {
+            return new AddModuleCommand(module);
+        }
+
+        assert module != null && !module.trim().isEmpty()
+            : "Module code should be parsed for add command";
+        assert task != null && !task.trim().isEmpty()
+            : "Task description should be parsed for add command";
 
         Integer weightage = parseWeightage(weightageRaw);
 
@@ -309,6 +348,130 @@ public class Parser {
     }
 
     /**
+     * Finds the position of a flag in the input string (case-insensitive).
+     * 
+     * @param input the input string to search
+     * @param flagName the flag name without the slash (e.g., "mod", "task", "due", "w")
+     * @return the position of the "/" character that precedes the flag, or -1 if not found
+     */
+    private int findFlagPosition(String input, String flagName) {
+        int index = 0;
+        int flagLength = flagName.length();
+        while (index < input.length()) {
+            if (input.charAt(index) == '/') {
+                int endPos = Math.min(index + flagLength + 1, input.length());
+                if (endPos <= input.length()) {
+                    String potentialFlag = input.substring(index + 1, endPos);
+                    // Check if it matches the flag and is followed by space (or end of string)
+                    if (potentialFlag.equalsIgnoreCase(flagName + " ") ||
+                        (potentialFlag.equalsIgnoreCase(flagName) && 
+                         (endPos == input.length() || input.charAt(endPos) == ' '))) {
+                        return index;
+                    }
+                }
+            }
+            index++;
+        }
+        return -1;
+    }
+
+    /**
+     * Validates that all flags in the input string are recognized.
+     * Throws an exception if any unrecognized flag is found.
+     * 
+     * @param input the input string to validate
+     * @param recognizedFlags array of recognized flag names without the slash
+     * @throws ModuleSyncException if an unrecognized flag is found
+     */
+    private void validateAllFlagsRecognized(String input, String[] recognizedFlags) 
+            throws ModuleSyncException {
+        int index = 0;
+        while (index < input.length()) {
+            if (input.charAt(index) == '/') {
+                // Extract the flag name (everything between / and the next space or end)
+                int endPos = index + 1;
+                while (endPos < input.length() && input.charAt(endPos) != ' ') {
+                    endPos++;
+                }
+                String flagName = input.substring(index + 1, endPos).toLowerCase();
+                
+                // Check if this flag is recognized
+                boolean isRecognized = false;
+                for (String recognized : recognizedFlags) {
+                    if (flagName.equalsIgnoreCase(recognized)) {
+                        isRecognized = true;
+                        break;
+                    }
+                }
+                
+                if (!isRecognized) {
+                    throw new ModuleSyncException(
+                        "Invalid flag '/" + flagName + "'! Recognized flags are: /mod, /task, /due, /w");
+                }
+            }
+            index++;
+        }
+    }
+
+    /**
+     * Extracts the value for a flag at a given position.
+     * For example, if input is "/mod CS2113 /task", this extracts "CS2113" for "/mod".
+     * 
+     * @param input the input string
+     * @param flagPos the position of the "/" character
+     * @param flagName the flag name without the slash
+     * @return the value after the flag, or empty string if none
+     */
+    private String extractFlagValue(String input, int flagPos, String flagName) {
+        // Start position is after "/FLAGNAME "
+        int valueStartPos = flagPos + 1 + flagName.length();
+        // Skip the space after the flag name if present
+        if (valueStartPos < input.length() && input.charAt(valueStartPos) == ' ') {
+            valueStartPos++;
+        }
+
+        // Find the end of the value (next flag or end of string)
+        int valueEndPos = valueStartPos;
+        while (valueEndPos < input.length() && input.charAt(valueEndPos) != '/') {
+            valueEndPos++;
+        }
+
+        // Extract and trim the value
+        if (valueStartPos < input.length()) {
+            return input.substring(valueStartPos, valueEndPos).trim();
+        }
+        return "";
+    }
+
+    /**
+     * Counts how many times a flag appears in the input string (case-insensitive).
+     * 
+     * @param input the input string to search
+     * @param flagName the flag name without the slash
+     * @return the number of times the flag appears
+     */
+    private int countFlagOccurrences(String input, String flagName) {
+        int count = 0;
+        int index = 0;
+        int flagLength = flagName.length();
+        while (index < input.length()) {
+            if (input.charAt(index) == '/') {
+                int endPos = Math.min(index + flagLength + 1, input.length());
+                if (endPos <= input.length()) {
+                    String potentialFlag = input.substring(index + 1, endPos);
+                    if (potentialFlag.equalsIgnoreCase(flagName + " ") ||
+                        (potentialFlag.equalsIgnoreCase(flagName) && 
+                         (endPos == input.length() || input.charAt(endPos) == ' '))) {
+                        count++;
+                    }
+                }
+            }
+            index++;
+        }
+        return count;
+    }
+
+    /**
      * Finds the position of the /task flag in the input string.
      * The search is case-insensitive to support /TASK, /Task, /task, etc.
      * 
@@ -317,23 +480,25 @@ public class Parser {
      *         or -1 if the /task flag is not found
      */
     private int findTaskFlagPosition(String input) {
-        // Search for /task (case-insensitive) followed by a space
-        int index = 0;
-        while (index < input.length()) {
-            if (input.charAt(index) == '/') {
-                // Check if this is /task (case-insensitive)
-                if (index + PREFIX_TASK_LENGTH + 1 <= input.length()) {
-                    int endPos = Math.min(index + PREFIX_TASK_LENGTH + 1, 
-                            input.length());
-                    String potentialFlag = input.substring(index + 1, endPos);
-                    if (potentialFlag.equalsIgnoreCase(PREFIX_TASK)) {
-                        return index;
-                    }
-                }
+        return findFlagPosition(input, "task");
+    }
+
+    /**
+     * Checks if a flag is present in the token array.
+     * A flag is considered present if any token starts with the flag prefix.
+     * 
+     * @param tokens the token array to search
+     * @param flagPrefix the flag prefix to look for (e.g., "due ", "w ")
+     * @return true if the flag is present in tokens, false otherwise
+     */
+    private boolean hasFlagInTokens(String[] tokens, String flagPrefix) {
+        for (String token : tokens) {
+            String trimmed = token.trim().toLowerCase();
+            if (trimmed.startsWith(flagPrefix)) {
+                return true;
             }
-            index++;
         }
-        return -1;
+        return false;
     }
 
     /**

@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.modulesync.command.AddDeadlineCommand;
 import seedu.modulesync.command.AddModuleCommand;
 import seedu.modulesync.command.AddTodoCommand;
 import seedu.modulesync.command.ArchiveModuleCommand;
@@ -32,9 +33,38 @@ class ParserTest {
     @Test
     void parse_addCommand_returnsAddTodo() throws ModuleSyncException {
         Parser parser = new Parser();
-        // /task is now a terminal flag and must appear last
+        // Basic add: /mod /task
         assertTrue(parser.parse("add /mod CS2113 /task Week8") instanceof AddTodoCommand);
-        assertTrue(parser.parse("add /mod CS2113 /task Task with /mod in description") instanceof AddTodoCommand);
+        // Task descriptions can contain /mod, /due, /w as plain text
+        assertTrue(parser.parse("add /mod CS2113 /task Task with /mod in description") 
+            instanceof AddTodoCommand);
+        // /w before /task creates a weighted todo
+        assertTrue(parser.parse("add /mod CS2113 /w 50 /task Quiz") instanceof AddTodoCommand);
+        // /due before /task creates a deadline
+        assertTrue(parser.parse("add /mod CS2113 /due 2026-04-15 /task Project") 
+            instanceof AddDeadlineCommand);
+    }
+
+    @Test
+    void parse_addCommand_missingValueThrows() {
+        Parser parser = new Parser();
+        // /due without value should throw
+        assertThrows(ModuleSyncException.class, 
+            () -> parser.parse("add /mod CS2113 /due /task test"));
+        // /w without value should throw
+        assertThrows(ModuleSyncException.class, 
+            () -> parser.parse("add /mod CS2113 /w /task test"));
+    }
+
+    @Test
+    void parse_addCommand_unrecognizedFlagThrows() {
+        Parser parser = new Parser();
+        // /test flag is not recognized
+        assertThrows(ModuleSyncException.class, 
+            () -> parser.parse("add /mod CS1010 /test test2 /w 100"));
+        // /grade flag is not valid for add command (only for grade command)
+        assertThrows(ModuleSyncException.class, 
+            () -> parser.parse("add /mod CS1010 /task homework /grade A"));
     }
 
     @Test
