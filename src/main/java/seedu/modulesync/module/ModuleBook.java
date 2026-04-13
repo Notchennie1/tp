@@ -96,6 +96,10 @@ public class ModuleBook {
             throw new ModuleSyncException("Task number must be a positive integer.");
         }
 
+        if (countTotalTasks() == 0) {
+            throw new ModuleSyncException("There are no tasks to delete yet. Add a task first, then use delete INDEX.");
+        }
+
         int currentIndex = 1;
         Iterator<Map.Entry<String, Module>> entryIterator = modules.entrySet().iterator();
         while (entryIterator.hasNext()) {

@@ -105,6 +105,21 @@ class ModuleSyncStartupWarningTest {
         assertFalse(actual.contains("Overdue warning:"));
     }
 
+    @Test
+    void run_deleteOnEmptyList_printsCleanUserErrorWithoutStackTrace(@TempDir Path tempDir)
+            throws ModuleSyncException {
+        SemesterBook semesterBook = new SemesterBook();
+        semesterBook.addSemester(new Semester("default", false));
+        semesterBook.setCurrentSemester("default");
+
+        String actual = runApplication(tempDir, semesterBook, "delete 1\nbye\n");
+
+        assertTrue(actual.contains("Error: There are no tasks to delete yet. "
+            + "Add a task first, then use delete INDEX.\n"));
+        assertFalse(actual.contains("Exception"));
+        assertFalse(actual.contains("at seedu.modulesync"));
+    }
+
     /**
      * Runs the application once with an injected semester book and returns the printed output.
      *
@@ -114,9 +129,17 @@ class ModuleSyncStartupWarningTest {
      * @throws ModuleSyncException if the test setup is invalid
      */
     private String runApplication(Path tempDir, SemesterBook semesterBook) throws ModuleSyncException {
+        return runApplication(tempDir, semesterBook, "bye\n");
+    }
+
+    /**
+     * Runs the application once with an injected semester book and scripted input.
+     */
+    private String runApplication(Path tempDir, SemesterBook semesterBook, String input)
+            throws ModuleSyncException {
         SemesterStorage semesterStorage = new SemesterStorage(tempDir);
         Parser parser = new Parser(semesterBook, semesterStorage);
-        Ui ui = new Ui(new Scanner(new ByteArrayInputStream("bye\n".getBytes(StandardCharsets.UTF_8))));
+        Ui ui = new Ui(new Scanner(new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8))));
         ModuleSync moduleSync = new ModuleSync(semesterBook, semesterStorage, parser, ui);
 
         ByteArrayOutputStream output = new ByteArrayOutputStream();
