@@ -48,6 +48,13 @@ public class GradeCommand extends Command {
             throw new ModuleSyncException("Module " + moduleCode + " not found.");
         }
 
+        // Warn if overwriting an existing grade
+        if (module.hasGrade()) {
+            String oldGrade = module.getGrade();
+            ui.showMessage("Warning: Module " + moduleCode + " already has grade " 
+                           + oldGrade + ". Overwriting with grade " + grade);
+        }
+
         module.setGrade(grade);
         storage.save(moduleBook);
         ui.showMessage("Grade recorded for module " + moduleCode + ": " + grade);
