@@ -324,20 +324,68 @@ public class Storage {
      * @throws ModuleSyncException if the line is malformed or the task type is unsupported
      */
     private Task decodeTask(String line) throws ModuleSyncException {
-        String[] parts = line.split(FIELD_SEPARATOR_REGEX);
+        String[] parts = splitRespectingEscapes(line);
         if (parts.length < MIN_TASK_FIELDS) {
             throw new ModuleSyncException("Corrupted task entry: " + line);
         }
-        String moduleCode = parts[FIELD_MODULE];
-        String type = parts[FIELD_TYPE];
-        boolean isDone = parseDone(parts[FIELD_DONE]);
-        String description = parts[FIELD_DESC];
+        String moduleCode = unescapeDelimiter(parts[FIELD_MODULE].trim());
+        String type = parts[FIELD_TYPE].trim();
+        boolean isDone = parseDone(parts[FIELD_DONE].trim());
+        String description = unescapeDelimiter(parts[FIELD_DESC].trim());
 
-        Task task = decodeTaskByType(type, parts, moduleCode, description, isDone, line);
-        restoreCompletedAt(task, parts);
+        // Unescape remaining parts for extra data
+        String[] unescapedParts = new String[parts.length];
+        for (int i = 0; i < parts.length; i++) {
+            unescapedParts[i] = unescapeDelimiter(parts[i].trim());
+        }
+
+        Task task = decodeTaskByType(type, unescapedParts, moduleCode, description, isDone, line);
+        restoreCompletedAt(task, unescapedParts);
 
         assert task != null : "Decoded task must not be null";
         return task;
+    }
+
+    /**
+     * Splits a line by the field separator (|) while respecting escape sequences.
+     * Escaped pipes (\|) and escaped backslashes (\\) are preserved in fields.
+     *
+     * @param line the line to split
+     * @return array of fields
+     */
+    private String[] splitRespectingEscapes(String line) {
+        java.util.List<String> fields = new java.util.ArrayList<>();
+        StringBuilder currentField = new StringBuilder();
+        
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            
+            if (c == '\\' && i + 1 < line.length()) {
+                // Escape sequence - include both characters
+                currentField.append(c);
+                currentField.append(line.charAt(i + 1));
+                i++; // Skip the next character
+            } else if (c == '|') {
+                // Unescaped pipe - field separator
+                fields.add(currentField.toString());
+                currentField = new StringBuilder();
+                // Skip surrounding whitespace
+                i++;
+                while (i < line.length() && line.charAt(i) == ' ') {
+                    i++;
+                }
+                i--; // Adjust for the loop increment
+            } else {
+                currentField.append(c);
+            }
+        }
+        
+        // Add the last field
+        if (currentField.length() > 0 || fields.isEmpty()) {
+            fields.add(currentField.toString());
+        }
+        
+        return fields.toArray(new String[0]);
     }
 
     /**
@@ -405,10 +453,15 @@ public class Storage {
         if (parts.length < TODO_FIELDS_WITHOUT_WEIGHTAGE) {
             throw new ModuleSyncException("Corrupted task entry: " + rawLine);
         }
+        
+        // Handle backward compatibility: if there are extra parts that don't look like
+        // valid fields (weightage or completed:...), rejoin them with the description
+        description = rejoindescriptionIfNeeded(parts, description, TODO_FIELDS_WITHOUT_WEIGHTAGE);
+        
         Todo todo = new Todo(moduleCode, description, isDone);
         if (parts.length >= TODO_FIELDS_WITH_WEIGHTAGE) {
             String candidate = parts[TODO_FIELDS_WITHOUT_WEIGHTAGE].trim();
-            if (!candidate.startsWith("completed:")) {
+            if (!candidate.startsWith("completed:") && isValidWeightageString(candidate)) {
                 int weightage = parseWeightage(candidate, rawLine);
                 todo.setWeightage(weightage);
             }
@@ -434,10 +487,15 @@ public class Storage {
         }
         try {
             LocalDateTime byDate = parseDueDate(parts[FIELD_DUE]);
+            
+            // Handle backward compatibility: if there are extra parts after due date
+            // that don't look like valid fields, rejoin them with the description
+            description = rejoindescriptionIfNeeded(parts, description, FIELD_DUE + 1);
+            
             Deadline deadline = new Deadline(moduleCode, description, isDone, byDate);
             if (parts.length >= DEADLINE_FIELDS_WITH_WEIGHTAGE) {
                 String candidate = parts[DEADLINE_FIELDS_WITHOUT_WEIGHTAGE].trim();
-                if (!candidate.startsWith("completed:")) {
+                if (!candidate.startsWith("completed:") && isValidWeightageString(candidate)) {
                     int weightage = parseWeightage(candidate, rawLine);
                     deadline.setWeightage(weightage);
                 }
@@ -446,6 +504,50 @@ public class Storage {
         } catch (DateTimeParseException e) {
             throw new ModuleSyncException("Corrupted deadline date in entry: " + rawLine);
         }
+    }
+
+    /**
+     * Checks if a string looks like a valid weightage value (integer 0-100).
+     * 
+     * @param str the string to check
+     * @return true if it looks like a valid weightage
+     */
+    private boolean isValidWeightageString(String str) {
+        try {
+            int value = Integer.parseInt(str.trim());
+            return value >= 0 && value <= 100;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Rejoins description parts if they were split due to unescaped pipes in old data.
+     * If parts[startIndex...] don't look like valid weightage/completed fields,
+     * they're rejoined back into the description.
+     *
+     * @param parts the split fields
+     * @param description the current description
+     * @param startIndex the index where extra parts might start
+     * @return the corrected description
+     */
+    private String rejoindescriptionIfNeeded(String[] parts, String description, int startIndex) {
+        if (parts.length <= startIndex) {
+            return description;
+        }
+        
+        // Check if parts starting from startIndex look like valid fields
+        String firstExtra = parts[startIndex].trim();
+        if (firstExtra.startsWith("completed:") || isValidWeightageString(firstExtra)) {
+            return description;
+        }
+        
+        // If not, rejoin all extra parts back into the description
+        StringBuilder sb = new StringBuilder(description);
+        for (int i = startIndex; i < parts.length; i++) {
+            sb.append(" | ").append(parts[i].trim());
+        }
+        return sb.toString();
     }
 
     /**
@@ -515,5 +617,33 @@ public class Storage {
         } catch (IOException e) {
             throw new ModuleSyncException("Unable to create storage directory: " + e.getMessage());
         }
+    }
+
+    /**
+     * Unescapes special characters (pipe and backslash) from storage file format.
+     * Processes escape sequences: \\ becomes \, \| becomes |.
+     *
+     * @param text the text to unescape
+     * @return the unescaped text
+     */
+    private static String unescapeDelimiter(String text) {
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < text.length(); i++) {
+            if (text.charAt(i) == '\\' && i + 1 < text.length()) {
+                char next = text.charAt(i + 1);
+                if (next == '|') {
+                    result.append('|');
+                    i++; // skip the next character
+                } else if (next == '\\') {
+                    result.append('\\');
+                    i++; // skip the next character
+                } else {
+                    result.append('\\');
+                }
+            } else {
+                result.append(text.charAt(i));
+            }
+        }
+        return result.toString();
     }
 }

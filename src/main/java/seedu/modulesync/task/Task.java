@@ -106,14 +106,14 @@ public abstract class Task {
 
     public String encode() {
         java.util.List<String> fields = new java.util.ArrayList<>();
-        fields.add(moduleCode);
+        fields.add(escapeDelimiter(moduleCode));
         fields.add(String.valueOf(getTypeCode()));
         fields.add(isDone ? "1" : "0");
-        fields.add(description);
+        fields.add(escapeDelimiter(description));
 
         String extra = encodeExtra();
         if (!extra.isEmpty()) {
-            fields.add(extra);
+            fields.add(escapeDelimiter(extra));
         }
 
         if (hasWeightage()) {
@@ -126,6 +126,17 @@ public abstract class Task {
         }
 
         return String.join(" | ", fields);
+    }
+
+    /**
+     * Escapes special characters (pipe and backslash) for storage file format.
+     * Backslash is escaped as \\. Pipe is escaped as \|.
+     *
+     * @param text the text to escape
+     * @return the escaped text
+     */
+    private static String escapeDelimiter(String text) {
+        return text.replace("\\", "\\\\").replace("|", "\\|");
     }
 
     protected String encodeExtra() {
