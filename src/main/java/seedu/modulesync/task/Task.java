@@ -156,6 +156,22 @@ public abstract class Task {
     }
 
     /**
+     * Formats this task as a string for display (e.g., in deletion confirmation).
+     * Does not include an index since the task is not in a list position.
+     *
+     * @return the formatted task string: [MODULE] [TYPE][STATUS] description [weightage]
+     */
+    public String formatForDisplay() {
+        String base = "[" + getModuleCode() + "] "
+                + "[" + getTypeCode() + "][" + getStatusIcon() + "] "
+                + description;
+        if (hasWeightage()) {
+            return base + " [" + weightage + "%]";
+        }
+        return base;
+    }
+
+    /**
      * Calculates the priority score for this task.
      *
      * @return the calculated priority score
