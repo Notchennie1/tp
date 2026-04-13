@@ -89,7 +89,7 @@ Formats:
 * `list` lists all non-archived modules in the active semester.
 * `list /mod MODULE_CODE` lists tasks for a specific module.
 * `list /deadlines` lists only deadline tasks, sorted chronologically.
-* `list /top NUMBER` lists the highest-priority tasks first.
+* `list /top NUMBER` lists the highest-priority tasks first. See [Listing top-priority tasks](#listing-top-priority-tasks-list-top) below.
 
 Examples:
 
@@ -97,6 +97,44 @@ Examples:
 * `list /mod CS2113`
 * `list /deadlines`
 * `list /top 5`
+
+### Listing top-priority tasks: `list /top`
+
+Shows the `NUMBER` tasks with the highest priority scores, sorted from most urgent to least.
+
+Format: `list /top NUMBER`
+
+Each task is displayed with a `[Priority: N]` label at the end of its line. A **higher number means higher priority** — that task needs your attention sooner.
+
+**How the priority score is calculated:**
+
+* **Todo tasks** (no deadline): score = weightage (0 if no weightage is set).
+* **Deadline tasks**: score = weightage + urgency score.
+  * The urgency score increases as the deadline approaches. A task due today receives the maximum urgency
+    contribution; a task due beyond 30 days receives the minimum.
+  * Deadline proximity is the **primary driver** of priority. A lower-weightage task due very soon will
+    typically outscore a higher-weightage task due much later.
+
+**Approximate score ranges:**
+
+| Situation | Score contribution |
+|---|---|
+| No weightage set | 0 from weightage |
+| Weightage set | 0–100 from weightage |
+| Deadline overdue or due today | ~181 from urgency |
+| Deadline due in ~7 days | ~139 from urgency |
+| Deadline due in ~30 days | 1 from urgency |
+| No deadline (todo) | 0 from urgency |
+
+So a task with `[Priority: 191]` is a 10%-weighted assignment due today, while `[Priority: 189]`
+is a 50%-weighted final due in one week — the assignment ranks higher because it is due immediately.
+
+Tasks with no weightage and no deadline always score 0 and appear at the bottom.
+
+Examples:
+
+* `list /top 3`
+* `list /top 10`
 
 ### Listing registered modules: `module list`
 Shows a list of all modules you are currently tracking.

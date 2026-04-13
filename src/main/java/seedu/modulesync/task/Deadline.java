@@ -11,6 +11,13 @@ public class Deadline extends Task {
     private static final int MINIMUM_DEADLINE_URGENCY_SCORE = 1;
     private static final int MAX_DEADLINE_URGENCY_SCORE = PRIORITY_WINDOW_DAYS
             + MINIMUM_DEADLINE_URGENCY_SCORE;
+    /**
+     * Scales the per-day urgency contribution so that deadline proximity can meaningfully
+     * override a higher weightage on a later task. A value of 6 means each day of extra
+     * urgency is worth 6 priority points — enough that a task due today beats a task with
+     * up to ~42% more weightage that is due a week later.
+     */
+    private static final int URGENCY_SCALE = 6;
 
     private final LocalDateTime by;
 
@@ -73,13 +80,13 @@ public class Deadline extends Task {
     private int calculateDeadlineUrgencyScore() {
         long hoursUntilDeadline = ChronoUnit.HOURS.between(LocalDateTime.now(), by);
         if (hoursUntilDeadline <= 0) {
-            return MAX_DEADLINE_URGENCY_SCORE;
+            return MAX_DEADLINE_URGENCY_SCORE * URGENCY_SCALE;
         }
 
         long boundedHoursUntilDeadline = Math.min(hoursUntilDeadline, PRIORITY_WINDOW_HOURS);
         long elapsedPriorityHours = PRIORITY_WINDOW_HOURS - boundedHoursUntilDeadline;
         long elapsedPriorityDays = elapsedPriorityHours / HOURS_PER_DAY;
-        return (int) elapsedPriorityDays + MINIMUM_DEADLINE_URGENCY_SCORE;
+        return (int) (elapsedPriorityDays * URGENCY_SCALE) + MINIMUM_DEADLINE_URGENCY_SCORE;
     }
 }
 

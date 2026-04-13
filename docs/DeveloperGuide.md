@@ -159,9 +159,9 @@ We chose `Integer` to keep the model lean and consistent with Java idiom for opt
 #### Implementation
 
 The List Deadlines feature provides a specialized view that displays only tasks with deadlines,
-sorted chronologically from earliest to latest. This helps users plan their week by seeing
-upcoming deadlines at a glance. The feature filters out to-do tasks without deadlines and
-presents the filtered list in priority order.
+grouped by actionability so users can decide what to work on next. The output order is:
+upcoming (future), then due today, then overdue. Within each group, deadlines are sorted
+consistently to keep the view predictable.
 
 The feature implements the following operations:
 
@@ -169,8 +169,8 @@ The feature implements the following operations:
   `/deadlines` is detected, it returns a `ListDeadlinesCommand` instead of the regular `ListCommand`.
 * `ListDeadlinesCommand#execute(ModuleBook, Storage, Ui)` — Executes the deadline listing by
   calling `Ui#showDeadlineList()`.
-* `Ui#showDeadlineList(ModuleBook)` — Collects all `Deadline` objects from all modules, sorts them
-  by due date in ascending order (earliest first), and displays them in a user-friendly format.
+* `Ui#showDeadlineList(ModuleBook)` — Collects all `Deadline` objects from all modules, groups them
+  into upcoming, due-today, and overdue buckets, then sorts and displays them in a user-friendly format.
 
 Given below is the workflow for the List Deadlines feature:
 
@@ -191,8 +191,9 @@ a `ListDeadlinesCommand` and returns it; otherwise, it returns the regular `List
 **Step 7.** `showDeadlineList()` iterates through all modules in the `ModuleBook` and collects all
 `Deadline` objects. For each deadline, it records the task number and module code.
 
-**Step 8.** The collected deadlines are sorted by their `LocalDateTime by` field in ascending order
-(earliest deadline first).
+**Step 8.** The collected deadlines are bucketed by urgency in this order:
+upcoming (future), due today, then overdue.
+Each bucket is then sorted deterministically before concatenating the final list.
 
 **Step 9.** Finally, the sorted deadlines are displayed to the user, showing module code, status,
 description, due date/time, and days remaining.
@@ -214,15 +215,15 @@ We chose the filter approach for consistency and extensibility.
 
 **Aspect: Sorting order for deadlines**
 
-* **Alternative 1 (Current choice): Sort by due date in ascending order (earliest first).**
-    * Pros: Users see the most urgent deadlines first, aiding prioritization.
-    * Cons: Does not highlight deadlines by urgency category (e.g., overdue vs. due soon vs. due later).
+* **Alternative 1 (Current choice): Group by urgency (upcoming, due today, overdue).**
+  * Pros: Keeps actionable deadlines at the top and prevents stale overdue tasks from burying near-term work.
+  * Cons: Slightly more sorting logic than a single chronological comparator.
 
-* **Alternative 2: Sort by days remaining with urgency grouping (overdue, due this week, etc.).**
-    * Pros: Provides visual urgency categorization.
-    * Cons: Adds complexity to sorting logic and UI formatting.
+* **Alternative 2: Sort all deadlines by due date in ascending order.**
+  * Pros: Minimal implementation complexity.
+  * Cons: Very old overdue tasks can dominate the top of the list and reduce planning usefulness.
 
-We chose ascending date order for simplicity and intuitive urgency ranking.
+We chose urgency grouping because it better matches how users prioritize work in semester planning.
 
 
 ### [Feature] List Not Done Tasks by Module (`list /notdone /mod MOD`)
@@ -524,7 +525,7 @@ The following sequence diagram illustrates the interactions when the user execut
 
 #### Implementation
 
-The application integrates `java.util.logging.Logger` combined with a `FileHandler` to silently write execution flows and caught exceptions to a background `duke.log` file. This ensures that debugging details are captured without polluting the CLI UI directly.
+The application integrates `java.util.logging.Logger` combined with a `FileHandler` to silently write execution flows and caught exceptions to a background `modulesync.log` file. This ensures that debugging details are captured without polluting the CLI UI directly.
 
 Furthermore, Java `assert` statements have been added in critical areas, such as the `DeleteCommand`, to enforce internal invariants and assumptions before executing destructive actions. This defensive programming approach prevents unintended corruption of the `ModuleBook` or application state.
 
@@ -542,7 +543,7 @@ The following sequence diagram illustrates the interactions involved when the sy
 
 **Aspect: Destination for system logs**
 
-* **Alternative 1 (Current choice): Log to a background file (`duke.log`).**
+* **Alternative 1 (Current choice): Log to a background file (`modulesync.log`).**
   * Pros: Maintains a clean, distraction-free user experience in the terminal while preserving diagnostic data for troubleshooting.
   * Cons: Requires developers to check an external file to view logs.
 
@@ -581,6 +582,80 @@ The `setcredits` bounding limit enforces absolute `0` to `40` Credit (MC) limits
 * **Alternative 1 (Current choice): Nullify multiplication outputs during `CapCommand` scans without crashing the tracker.**
   * Pros: Accurately renders non-credit classes explicitly.
   * Cons: Adds bounding filters internally.
+
+---
+
+### [Feature] Ranking Tasks by Priority (`list /top`)
+
+#### Overview
+
+The priority ranking feature allows users to surface their most urgent work with `list /top N`.
+Each task carries a **priority score** — a single integer displayed as `[Priority: N]` — computed
+from two inputs: the task's weightage and, for deadline tasks, how soon the deadline falls.
+
+#### Priority Score Formula
+
+**For `Todo` tasks (no deadline):**
+
+```
+priority = weightage          (0 if no weightage is set)
+```
+
+**For `Deadline` tasks:**
+
+```
+priority = weightage + urgencyScore
+
+urgencyScore = (elapsedDays × URGENCY_SCALE) + MINIMUM_DEADLINE_URGENCY_SCORE
+```
+
+Where:
+- `elapsedDays` = number of days already consumed within a 30-day urgency window
+  (i.e. `30 − daysUntilDeadline`, clamped to 0–30)
+- `URGENCY_SCALE = 6` — each day of additional urgency is worth 6 priority points
+- `MINIMUM_DEADLINE_URGENCY_SCORE = 1` — every deadline task receives at least 1 urgency point
+- If the deadline has already passed, `urgencyScore` is capped at `MAX = 31 × 6 = 186`
+
+**Score ranges:**
+
+| Condition | Urgency contribution |
+|---|---|
+| Overdue (deadline passed) | 186 |
+| Due today | 181 |
+| Due in 7 days | 181 − (7 × 6) = 139 |
+| Due in 30+ days | 1 |
+| Todo (no deadline) | 0 |
+
+Because the urgency range (1–186) substantially exceeds the weightage range (0–100), **deadline
+proximity is the primary ranking driver**. A lower-weighted task due today will outscore a
+higher-weighted task due in one week if the weightage gap is smaller than the urgency difference
+(e.g. a 10% task due today scores `10 + 181 = 191`; a 50% task due in 7 days scores
+`50 + 139 = 189`).
+
+#### Design Considerations
+
+**Aspect: Urgency scale factor**
+
+* **Alternative 1 (Current choice): `URGENCY_SCALE = 6`, additive formula.**
+  * Pros: Deadline proximity dominates for imminent tasks while weightage still acts as a
+    meaningful tiebreaker for tasks with similar deadlines. Single constant to tune.
+  * Cons: The interaction between the two components is not immediately intuitive from the
+    displayed number alone.
+
+* **Alternative 2: Multiplicative formula (`weightage × urgency`).**
+  * Pros: Completely eliminates tasks with zero weightage from the top of the list.
+  * Cons: Unweighted tasks always score 0 regardless of urgency; requires rewriting the
+    base class method.
+
+**Aspect: Urgency window (30 days)**
+
+* **Alternative 1 (Current choice): Tasks due beyond 30 days receive minimum urgency (1).**
+  * Pros: Keeps the score bounded and focuses attention on the near term.
+  * Cons: All tasks due in ≥ 30 days look identical in urgency contribution.
+
+* **Alternative 2: Continuous decay over a longer window (e.g. 90 days).**
+  * Pros: Fine-grained urgency even for distant deadlines.
+  * Cons: Scores become harder to reason about; distant tasks gain undue urgency weight.
 
 ---
 
@@ -670,7 +745,7 @@ ModuleSync solves the problem of context-switching overhead for students who cur
 | **Display index** | The 1-based integer shown next to each task by the `list` command. Used as the identifier for `mark`, `unmark`, `delete`, `setweight`, and `setdeadline`. |
 | **CAP** | Cumulative Average Point — NUS's GPA metric on a 5.0 scale. Only CAP-bearing grades (`A+`, `A`, `A-`, `B+`, etc.) contribute. Grades such as `S`, `U`, `CS`, and `CU` are excluded. |
 | **MCs** | Modular Credits — the credit-unit weight of a module. Used as the denominator when computing weighted CAP averages. |
-| **Priority score** | A numeric value computed from a task's weightage (and deadline proximity for `Deadline` tasks) used to rank tasks in `list /top`. |
+| **Priority score** | A numeric value used to rank tasks in `list /top`. For `Todo` tasks: score = weightage (0 if unset). For `Deadline` tasks: score = weightage + urgency score, where urgency score = `(daysElapsedInWindow × URGENCY_SCALE) + 1` and scales up as the deadline approaches (maximum when overdue, minimum when due in ≥ 30 days). See the Implementation chapter for the full formula. |
 | **`ModuleBook`** | The in-memory data structure that holds all `Module` objects for one semester. Each `Semester` owns exactly one `ModuleBook`. |
 | **`SemesterBook`** | The in-memory registry of all `Semester` objects. Maintains the pointer to the currently active semester. |
 | **`Command` (abstract)** | The base class for all executable user actions. `Parser` creates a concrete subclass; `ModuleSync` calls its `execute()` method. |
@@ -723,7 +798,8 @@ module list
 
 Expected:
 - `list` shows all tasks numbered from 1 with module codes, type (`T`/`D`), done status, and weightage where set.
-- `list /deadlines` shows only deadline tasks sorted earliest-first.
+- `list /deadlines` shows only deadline tasks with upcoming/due-today entries first,
+  and overdue entries grouped at the end.
 - `list /top 3` shows the three tasks with the highest priority scores.
 - `list /notdone /mod CS2113` shows only incomplete CS2113 tasks, using **the same global indices as `list`**.
 - `module list` shows `CS2113 (4 task(s))` and `MA1521 (2 task(s))`.
