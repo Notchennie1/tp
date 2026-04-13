@@ -20,6 +20,7 @@ import seedu.modulesync.command.EditDeadlineCommand;
 import seedu.modulesync.command.EditWeightCommand;
 import seedu.modulesync.command.ExitCommand;
 import seedu.modulesync.command.GradeCommand;
+import seedu.modulesync.command.HelpCommand;
 import seedu.modulesync.command.ListCommand;
 import seedu.modulesync.command.ListDeadlinesCommand;
 import seedu.modulesync.command.ListGradesCommand;
@@ -69,6 +70,7 @@ public class Parser {
     private static final String CMD_SEMESTER = "semester";
     private static final String CMD_SWITCH = "switch";
     private static final String CMD_CAP = "cap";
+    private static final String CMD_HELP = "help";
 
     private static final String PREFIX_DEADLINES = "/deadlines";
     private static final String PREFIX_NOT_DONE = "/notdone";
@@ -212,6 +214,9 @@ public class Parser {
         }
         if (trimmed.toLowerCase().startsWith(CMD_STATS)) {
             return parseStats(trimmed);
+        }
+        if (trimmed.equalsIgnoreCase(CMD_HELP)) {
+            return new HelpCommand();
         }
         throw new ModuleSyncException(UNKNOWN_COMMAND_MSG);
     }

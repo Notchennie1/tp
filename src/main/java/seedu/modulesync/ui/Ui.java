@@ -42,6 +42,95 @@ public class Ui {
         System.out.println("Bye. Hope to see you again!");
     }
 
+    /**
+     * Displays a summary of all available commands.
+     */
+    public void showHelp() {
+        System.out.println("Here are the available commands:");
+        System.out.println();
+        System.out.println("--- Task Management ---");
+        System.out.println("  add /mod MOD /task DESCRIPTION [/due YYYY-MM-DD]");
+        System.out.println("      Add a task (todo or deadline) under a module.");
+        System.out.println("  delete INDEX");
+        System.out.println("      Delete a task by its list index.");
+        System.out.println("  mark INDEX");
+        System.out.println("      Mark a task as done.");
+        System.out.println("  unmark INDEX");
+        System.out.println("      Mark a task as not done.");
+        System.out.println("  setweight /mod MOD /task INDEX w WEIGHT");
+        System.out.println("      Set the weightage of a task.");
+        System.out.println("  editweight /mod MOD /task INDEX w WEIGHT");
+        System.out.println("      Edit the weightage of a task.");
+        System.out.println("  setdeadline /mod MOD /task INDEX /due YYYY-MM-DD");
+        System.out.println("      Set a deadline for a task.");
+        System.out.println("  editdeadline /mod MOD /task INDEX /due YYYY-MM-DD");
+        System.out.println("      Edit the deadline of a task.");
+        System.out.println();
+        System.out.println("--- Listing ---");
+        System.out.println("  list");
+        System.out.println("      List all tasks.");
+        System.out.println("  list /mod MOD");
+        System.out.println("      List tasks for a specific module.");
+        System.out.println("  list /notdone /mod MOD");
+        System.out.println("      List incomplete tasks for a module.");
+        System.out.println("  list /deadlines");
+        System.out.println("      List all upcoming deadlines in chronological order.");
+        System.out.println("  list /top N");
+        System.out.println("      List the top N highest-weighted tasks.");
+        System.out.println();
+        System.out.println("--- Modules ---");
+        System.out.println("  module add MOD");
+        System.out.println("      Add a new module to the current semester.");
+        System.out.println("  module delete MOD");
+        System.out.println("      Delete a module from the current semester.");
+        System.out.println("  module archive MOD");
+        System.out.println("      Archive a module.");
+        System.out.println("  module unarchive MOD");
+        System.out.println("      Unarchive a module.");
+        System.out.println("  module list");
+        System.out.println("      List all modules in the current semester.");
+        System.out.println("  setcredits /mod MOD CREDITS");
+        System.out.println("      Set the MCs (credits) for a module.");
+        System.out.println();
+        System.out.println("--- Grades ---");
+        System.out.println("  grade /mod MOD grade GRADE");
+        System.out.println("      Record a grade for a module.");
+        System.out.println("  grades list");
+        System.out.println("      Show grade history across all semesters.");
+        System.out.println("  cap");
+        System.out.println("      Display your cumulative CAP.");
+        System.out.println();
+        System.out.println("--- Stats ---");
+        System.out.println("  stats");
+        System.out.println("      Show task completion statistics.");
+        System.out.println("  semester stats");
+        System.out.println("      Show statistics for the current semester.");
+        System.out.println();
+        System.out.println("--- Checks ---");
+        System.out.println("  check /conflicts");
+        System.out.println("      Show same-day deadline conflicts.");
+        System.out.println("  check /urgent");
+        System.out.println("      Show the most urgent upcoming tasks.");
+        System.out.println();
+        System.out.println("--- Semester Management ---");
+        System.out.println("  semester new NAME");
+        System.out.println("      Create a new semester.");
+        System.out.println("  semester list");
+        System.out.println("      List all semesters.");
+        System.out.println("  switch NAME");
+        System.out.println("      Switch to a different semester.");
+        System.out.println("  semester archive NAME");
+        System.out.println("      Archive a semester (read-only).");
+        System.out.println("  semester unarchive NAME");
+        System.out.println("      Unarchive a semester.");
+        System.out.println();
+        System.out.println("--- General ---");
+        System.out.println("  help");
+        System.out.println("      Show this help message.");
+        System.out.println("  bye");
+        System.out.println("      Exit the application.");
+    }
+
     public String readCommand() {
         if (scanner.hasNextLine()) {
             return scanner.nextLine();
