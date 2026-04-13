@@ -57,7 +57,7 @@ public class Deadline extends Task {
     public String formatForList(int index) {
         String base = super.formatForList(index);
         String formattedDate = by.format(DateTimeFormatter.ofPattern("MMM dd yyyy, HH:mm"));
-        return base + " (by: " + formattedDate + ", " + getDaysLeft() + " days left)";
+        return base + " (by: " + formattedDate + ", " + getDaysLeft() + " day(s) left)";
     }
 
     /**

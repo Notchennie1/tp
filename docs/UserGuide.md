@@ -72,7 +72,7 @@ Important: Square brackets in the format line indicate optional parts. Do not ty
 * `/due` is optional.
   * `YYYY-MM-DD` is interpreted as `23:59` on that date.
   * `YYYY-MM-DD-HHmm` specifies an exact time.
-* `/w` is optional and must be an integer from `0` to `100`.
+* `/w` is optional and must be a whole number from `0` to `100`. **Do not include the `%` symbol** (e.g. use `25`, not `25%`).
 * `/due` and `/w` can appear in any order.
 
 Examples:
@@ -291,7 +291,7 @@ Formats:
 * `editweight TASK_NUMBER /w PERCENT`
 
 * `TASK_NUMBER` is the global display index shown by `list`.
-* `PERCENT` must be an integer from `0` to `100`.
+* `PERCENT` must be a whole number from `0` to `100`. **Do not include the `%` symbol** (e.g. use `25`, not `25%`).
 
 Examples:
 
