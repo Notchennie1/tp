@@ -9,6 +9,7 @@ ModuleSync is a desktop CLI-based task manager designed to help university stude
 **Highlights:**
 - Deletion updates the in-memory state safely and persists the updated state to storage.
 - Includes unit testing coverage for valid deletion and invalid index handling.
+**Side Note** Did the code personally however the pushed code which i fetch had error and it got reverted, my friend instead reference my code and added it for me
 
 ### Feature 2: List Not-Done Tasks by Module (`list /notdone /mod MODULE_CODE`)
 **What it does:** Supports listing only the tasks that are not marked done for a specific module, separated from the main list view.
