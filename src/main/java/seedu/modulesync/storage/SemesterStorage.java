@@ -19,10 +19,10 @@ import seedu.modulesync.semester.SemesterBook;
  * <h2>File layout</h2>
  * <pre>
  * data/
- *   current.txt          ← single line: name of the active semester (e.g. "AY2526-S2")
- *   AY2526-S2.txt        ← active semester's task data
- *   AY2526-S1.txt        ← archived semester's task data
- *   AY2425-S2.txt        ← archived semester's task data
+ *   current.txt          (single line: name of the active semester, e.g. "AY2526-S2")
+ *   AY2526-S2.txt        (active semester's task data)
+ *   AY2526-S1.txt        (archived semester's task data)
+ *   AY2425-S2.txt        (archived semester's task data)
  * </pre>
  *
  * <h2>Semester file name convention</h2>

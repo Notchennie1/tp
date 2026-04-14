@@ -1,9 +1,5 @@
 package seedu.modulesync.others;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -13,11 +9,14 @@ import java.time.LocalDateTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import seedu.modulesync.command.ListTopCommand;
 import seedu.modulesync.command.ListCommand;
+import seedu.modulesync.command.ListTopCommand;
 import seedu.modulesync.exception.ModuleSyncException;
 import seedu.modulesync.module.ModuleBook;
 import seedu.modulesync.storage.Storage;
@@ -65,8 +64,8 @@ class PriorityScoreListFeatureTest {
 
         String actual = output.toString(StandardCharsets.UTF_8).replace("\r\n", "\n");
         String expected = "Here are the tasks:\n"
-                + "1.[CS2113] [T][ ] Weighted reading [40%] [Priority: 40]\n"
-                + "2.[CS2100] [T][ ] Unweighted practice [Priority: 0]\n";
+                + "1.[CS2113] [T][ ] Weighted reading [40%]\n"
+                + "2.[CS2100] [T][ ] Unweighted practice\n";
 
         assertEquals(expected, actual);
         assertFalse(storageStub.isSaved());
@@ -91,7 +90,7 @@ class PriorityScoreListFeatureTest {
         System.setOut(new PrintStream(output));
 
         try {
-            new ListCommand().execute(moduleBook, storageStub, ui);
+            new ListTopCommand(3).execute(moduleBook, storageStub, ui);
         } finally {
             System.setOut(originalOut);
         }
@@ -103,7 +102,6 @@ class PriorityScoreListFeatureTest {
 
         assertTrue(highWeightScore > lowWeightScore);
         assertTrue(earlierDeadlineScore > lowWeightScore);
-        assertTrue(actual.contains("[Priority: "));
         assertFalse(storageStub.isSaved());
     }
 

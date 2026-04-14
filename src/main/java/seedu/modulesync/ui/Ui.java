@@ -25,6 +25,8 @@ public class Ui {
     private static final int DEADLINE_BUCKET_UPCOMING = 0;
     private static final int DEADLINE_BUCKET_DUE_TODAY = 1;
     private static final int DEADLINE_BUCKET_OVERDUE = 2;
+    private static final String PRIORITY_PREFIX = " [Priority: ";
+    private static final String PRIORITY_SUFFIX = "]";
     private static final String NO_GRADES_FOUND_MESSAGE =
             "No recorded grades found. A grade summary cannot be generated yet.";
     private static final int MODULE_COLUMN_WIDTH = 8;
@@ -405,6 +407,9 @@ public class Ui {
         int globalTaskNumber = 1;
 
         for (Module module : moduleBook.getModules()) {
+            if (module.isArchived()) {
+                continue;
+            }
             for (Task task : module.getTasks().asUnmodifiableList()) {
                 if (task instanceof Deadline) {
                     Deadline deadline = (Deadline) task;
@@ -429,6 +434,9 @@ public class Ui {
         int globalTaskNumber = 1;
 
         for (Module module : moduleBook.getModules()) {
+            if (module.isArchived()) {
+                continue;
+            }
             for (Task task : module.getTasks().asUnmodifiableList()) {
                 if (task instanceof Deadline && !task.isDone()) {
                     Deadline deadline = (Deadline) task;
@@ -498,6 +506,9 @@ public class Ui {
 
         // Collect all tasks with their metadata
         for (Module module : moduleBook.getModules()) {
+            if (module.isArchived()) {
+                continue;
+            }
             assert module != null : "Module retrieved from ModuleBook must not be null";
             for (Task task : module.getTasks().asUnmodifiableList()) {
                 assert task != null : "Task retrieved from TaskList must not be null";
@@ -543,7 +554,7 @@ public class Ui {
         System.out.println("Here are your top " + displayCount + " most urgent task(s):");
         for (int i = 0; i < displayCount; i++) {
             UrgentTaskEntry entry = urgentTasks.get(i);
-            showTaskWithPriority(entry.task, entry.taskNumber);
+            showTaskWithPriorityScore(entry.task, entry.taskNumber, entry.priorityScore);
         }
     }
 
@@ -583,7 +594,7 @@ public class Ui {
     }
 
     /**
-     * Prints a task line together with its calculated priority score.
+     * Prints a task line for display in a list.
      *
      * @param task the task to print
      * @param taskNumber the global display index of the task
@@ -591,7 +602,20 @@ public class Ui {
     private void showTaskWithPriority(Task task, int taskNumber) {
         assert task != null : "Task must not be null when showing a list entry";
         assert taskNumber > 0 : "Task number must be positive when showing a list entry";
-        System.out.println(task.formatForListWithPriority(taskNumber));
+        System.out.println(task.formatForList(taskNumber));
+    }
+
+    /**
+     * Prints a task line with its priority score (for list /top only).
+     *
+     * @param task the task to print
+     * @param taskNumber the global display index of the task
+     * @param priorityScore the calculated priority score
+     */
+    private void showTaskWithPriorityScore(Task task, int taskNumber, int priorityScore) {
+        assert task != null : "Task must not be null when showing a list entry";
+        assert taskNumber > 0 : "Task number must be positive when showing a list entry";
+        System.out.println(task.formatForList(taskNumber) + PRIORITY_PREFIX + priorityScore + PRIORITY_SUFFIX);
     }
 
     /**

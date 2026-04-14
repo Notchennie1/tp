@@ -183,15 +183,5 @@ public abstract class Task {
         return getWeightage();
     }
 
-    /**
-     * Formats this task for list output together with its priority score.
-     *
-     * @param index the global display index of the task
-     * @return the formatted task line with its priority score
-     */
-    public String formatForListWithPriority(int index) {
-        String formattedTask = formatForList(index);
-        int priorityScore = calculatePriorityScore();
-        return formattedTask + PRIORITY_PREFIX + priorityScore + PRIORITY_SUFFIX;
-    }
+
 }
