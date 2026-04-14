@@ -74,6 +74,9 @@ public class ModuleBook {
 
         int currentIndex = 1;
         for (Module module : modules.values()) {
+            if (module.isArchived()) {
+                continue;
+            }
             for (Task task : module.getTasks().asUnmodifiableList()) {
                 if (currentIndex == displayIndex) {
                     return task;
@@ -105,6 +108,9 @@ public class ModuleBook {
         while (entryIterator.hasNext()) {
             Map.Entry<String, Module> entry = entryIterator.next();
             Module module = entry.getValue();
+            if (module.isArchived()) {
+                continue;
+            }
             int moduleTaskCount = module.getTasks().size();
             if (displayIndex >= currentIndex && displayIndex < currentIndex + moduleTaskCount) {
                 int indexInModule = displayIndex - currentIndex;

@@ -1,14 +1,13 @@
 package seedu.modulesync.command;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -54,8 +53,8 @@ class ListCommandTest {
 
         String actual = output.toString(StandardCharsets.UTF_8).replace("\r\n", "\n");
         String expected = "Here are the tasks:\n"
-                + "1.[CS2113] [T][ ] Week8 [Priority: 0]\n"
-                + "2.[CS2100] [T][X] Tutorial [Priority: 0]\n";
+                + "1.[CS2113] [T][ ] Week8\n"
+                + "2.[CS2100] [T][X] Tutorial\n";
 
         assertEquals(expected, actual);
         assertFalse(storage.saved);
@@ -84,7 +83,7 @@ class ListCommandTest {
 
         String actual = output.toString(StandardCharsets.UTF_8).replace("\r\n", "\n");
         String expected = "Here are the not done tasks for CS2113:\n"
-                + "1.[CS2113] [T][ ] Week8 [Priority: 0]\n";
+                + "1.[CS2113] [T][ ] Week8\n";
 
         assertEquals(expected, actual);
         assertFalse(storage.saved);
@@ -114,8 +113,8 @@ class ListCommandTest {
 
         String actual = output.toString(StandardCharsets.UTF_8).replace("\r\n", "\n");
         String expected = "Here are the tasks for CS2113:\n"
-                + "2.[CS2113] [T][ ] Week10 [Priority: 0]\n"
-                + "3.[CS2113] [T][ ] Quiz [Priority: 0]\n";
+                + "2.[CS2113] [T][ ] Week10\n"
+                + "3.[CS2113] [T][ ] Quiz\n";
 
         assertEquals(expected, actual);
         assertFalse(storage.saved);

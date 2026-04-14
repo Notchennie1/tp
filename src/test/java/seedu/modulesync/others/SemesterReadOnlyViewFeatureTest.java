@@ -1,9 +1,5 @@
 package seedu.modulesync.others;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -13,6 +9,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Scanner;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -108,7 +107,7 @@ class SemesterReadOnlyViewFeatureTest {
         String actual = output.toString(StandardCharsets.UTF_8).replace("\r\n", "\n");
 
         assertTrue(actual.contains("Now viewing AY2525-S1 [read-only]. Use 'semester switch AY2525-S2' to return.\n"));
-        assertTrue(actual.contains("Here are the tasks:\n1.[CS2113] [T][ ] Past checkpoint [Priority: 0]\n"));
+        assertTrue(actual.contains("Here are the tasks:\n1.[CS2113] [T][ ] Past checkpoint\n"));
         assertFalse(actual.contains("Current semester task"));
         assertTrue(actual.contains("AY2525-S1 Results (Archived)\n"));
         assertTrue(actual.contains("Error: Semester 'AY2525-S1' is archived and read-only."));
